@@ -24,6 +24,31 @@ type Engine struct {
 	Display   *Display
 }
 
+// stepDisplayModel returns a human-readable label for the step's executor/model,
+// suitable for the terminal output model column.
+// Security: shell steps always return "shell" to avoid exposing raw commands.
+func (e *Engine) stepDisplayModel(step types.Step) string {
+	switch {
+	case step.Type == "github-pr":
+		return "github-pr"
+	case step.Executor == "claude-code":
+		return "claude-code"
+	case step.Executor == "shell":
+		// Never expose raw shell commands; they may contain secrets or sensitive paths.
+		return "shell"
+	case step.Executor == "api":
+		model := e.resolveModel(step.Model)
+		if model == "" {
+			return "api"
+		}
+		return model
+	case step.Executor != "":
+		return step.Executor
+	default:
+		return "—"
+	}
+}
+
 // Execute runs all steps in sequence.
 func (e *Engine) Execute(ctx context.Context, pipelineCtx *Context) error {
 	startTime := time.Now()
@@ -36,7 +61,8 @@ func (e *Engine) Execute(ctx context.Context, pipelineCtx *Context) error {
 		default:
 		}
 
-		e.Display.StepStart(step.Name)
+		displayModel := e.stepDisplayModel(step)
+		e.Display.StepStart(step.Name, displayModel)
 		stepStart := time.Now()
 
 		var stepErr error
@@ -60,7 +86,7 @@ func (e *Engine) Execute(ctx context.Context, pipelineCtx *Context) error {
 		duration := time.Since(stepStart)
 
 		if stepErr != nil {
-			e.Display.StepFailed(step.Name, stepErr)
+			e.Display.StepFailed(step.Name, displayModel, stepErr)
 			if err := e.Run.Fail(stepErr.Error()); err != nil {
 				vlog.Error("failed to update run meta", "err", err)
 			}
@@ -78,7 +104,7 @@ func (e *Engine) Execute(ctx context.Context, pipelineCtx *Context) error {
 			vlog.Warn("failed to save step result", "step", step.Name, "err", err)
 		}
 
-		e.Display.StepDone(step.Name, detail, cost, duration)
+		e.Display.StepDone(step.Name, displayModel, detail, cost, duration)
 	}
 
 	if err := e.Run.Complete(); err != nil {

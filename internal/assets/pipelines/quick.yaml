@@ -12,6 +12,10 @@ steps:
     executor: claude-code
     input: [PLAN.md]
 
+  - name: Commit
+    executor: shell
+    command: "git add -A && git commit -m 'feat: automated implementation via vcoding' && git push"
+
   - name: PR
     type: github-pr
     title_from: TICKET.md
