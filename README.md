@@ -238,6 +238,21 @@ steps:
 | Variable | Description |
 |----------|-------------|
 | `OPENROUTER_API_KEY` | Required for API executor |
+| `GH_TOKEN` | GitHub token for CI environments (bypasses `gh auth login`) |
+| `GITHUB_TOKEN` | Alternative to `GH_TOKEN`; `GH_TOKEN` takes precedence |
+
+## CI Usage
+
+In CI environments, authenticate with GitHub by setting `GH_TOKEN` instead of running `gh auth login`:
+
+```yaml
+# GitHub Actions — gh is pre-installed on ubuntu-latest/macos-latest/windows-latest
+env:
+  GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+```
+
+For other CI systems (GitLab CI, CircleCI, etc.), install the `gh` CLI and set `GH_TOKEN` in the job environment. In Docker/container environments, set `GH_TOKEN` via environment variable rather than mounting credential files.
 
 ## Cost Tracking
 
