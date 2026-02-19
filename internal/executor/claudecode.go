@@ -47,11 +47,6 @@ func (e *ClaudeCodeExecutor) Execute(ctx context.Context, req *Request) (*Result
 		}
 	}
 
-	// Allow extra flags from config (e.g. --verbose) without clobbering required flags above.
-	if len(entry.Args) > 0 {
-		args = append(args, entry.Args...)
-	}
-
 	timeout, err := parseTimeout(entry.Timeout)
 	if err != nil {
 		timeout = 1800 * time.Second

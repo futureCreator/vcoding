@@ -40,9 +40,8 @@ type GitHubConfig struct {
 }
 
 type ExecutorEntry struct {
-	Command string   `yaml:"command"`
-	Args    []string `yaml:"args"`
-	Timeout string   `yaml:"timeout"`
+	Command string `yaml:"command"`
+	Timeout string `yaml:"timeout"`
 }
 
 type ExecutorsConfig struct {
