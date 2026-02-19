@@ -37,8 +37,8 @@ func Scan(cfg *config.ProjectCtxConfig) ([]FileEntry, error) {
 					return filepath.SkipDir
 				}
 			}
-			// Skip hidden directories except root "." and .vcoding
-			if path != "." && strings.HasPrefix(info.Name(), ".") && info.Name() != ".vcoding" {
+			// Skip hidden directories except root "."
+			if path != "." && strings.HasPrefix(info.Name(), ".") {
 				return filepath.SkipDir
 			}
 			return nil

@@ -45,7 +45,6 @@ roles:
   auditor: openai/codex-5.3
 
 github:
-  token_env: GITHUB_TOKEN
   base_branch: main
 
 executors:

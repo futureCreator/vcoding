@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 )
 
@@ -17,30 +18,31 @@ type Context struct {
 }
 
 // ResolveInput loads the content of each input spec.
-// Supports special inputs: "git:diff", "git:diff:base", "git:log"
+// Supports special inputs: "git:diff", "git:diff:base", "git:log", "project:context"
 // and regular filenames resolved from RunDir.
-func (c *Context) ResolveInput(inputs []string) (map[string]string, string, error) {
+func (c *Context) ResolveInput(inputs []string) (map[string]string, error) {
 	files := make(map[string]string)
-	var gitDiff string
 
 	for _, inp := range inputs {
 		switch inp {
 		case "git:diff":
-			gitDiff = c.GitDiff
+			files["git:diff"] = c.GitDiff
 		case "git:diff:base":
-			gitDiff = c.GitDiffBase
+			files["git:diff:base"] = c.GitDiffBase
 		case "git:log":
 			files["git:log"] = c.GitLog
+		case "project:context":
+			files["project:context"] = c.ProjectCtx
 		default:
 			content, err := c.readFile(inp)
 			if err != nil {
-				return nil, "", fmt.Errorf("reading input %q: %w", inp, err)
+				return nil, fmt.Errorf("reading input %q: %w", inp, err)
 			}
 			files[inp] = content
 		}
 	}
 
-	return files, gitDiff, nil
+	return files, nil
 }
 
 func (c *Context) readFile(name string) (string, error) {
@@ -58,6 +60,7 @@ func (c *Context) readFile(name string) (string, error) {
 
 // TruncateToTokenBudget truncates the combined content of files to stay within
 // maxTokens (rough estimate: 4 chars ≈ 1 token).
+// Keys are processed in sorted order for deterministic results.
 func TruncateToTokenBudget(files map[string]string, systemPrompt string, maxTokens int) map[string]string {
 	if maxTokens <= 0 {
 		return files
@@ -69,8 +72,16 @@ func TruncateToTokenBudget(files map[string]string, systemPrompt string, maxToke
 		return files
 	}
 
+	// Sort keys for deterministic truncation order
+	keys := make([]string, 0, len(files))
+	for k := range files {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+
 	result := make(map[string]string)
-	for name, content := range files {
+	for _, name := range keys {
+		content := files[name]
 		contentTokens := len(content) / 4
 		if used+contentTokens <= budget {
 			result[name] = content

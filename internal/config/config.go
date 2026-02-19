@@ -34,7 +34,6 @@ type RolesConfig struct {
 }
 
 type GitHubConfig struct {
-	TokenEnv    string `yaml:"token_env"`
 	DefaultRepo string `yaml:"default_repo"`
 	BaseBranch  string `yaml:"base_branch"`
 }
@@ -124,7 +123,6 @@ func defaults() *Config {
 			Auditor:  "openai/codex-5.3",
 		},
 		GitHub: GitHubConfig{
-			TokenEnv:   "GITHUB_TOKEN",
 			BaseBranch: "main",
 		},
 		Executors: ExecutorsConfig{
@@ -142,7 +140,7 @@ func defaults() *Config {
 			MaxFiles:        20,
 			MaxFileSize:     "50KB",
 			IncludePatterns: []string{"*.go", "*.rs", "*.ts", "*.py", "*.md"},
-			ExcludePatterns: []string{"vendor/", "node_modules/", ".git/"},
+			ExcludePatterns: []string{"vendor/", "node_modules/", ".git/", ".vcoding/"},
 		},
 		MaxContextTokens: 80000,
 		LogLevel:         "info",

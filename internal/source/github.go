@@ -2,10 +2,9 @@ package source
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
-	"os/exec"
-	"strings"
+
+	"github.com/epmk/vcoding/internal/github"
 )
 
 // GitHubSource fetches a GitHub issue via the gh CLI.
@@ -13,22 +12,10 @@ type GitHubSource struct {
 	IssueNumber string
 }
 
-type ghIssue struct {
-	Number int    `json:"number"`
-	Title  string `json:"title"`
-	Body   string `json:"body"`
-}
-
 func (s *GitHubSource) Fetch(ctx context.Context) (*Input, error) {
-	cmd := exec.CommandContext(ctx, "gh", "issue", "view", s.IssueNumber, "--json", "number,title,body")
-	out, err := cmd.Output()
+	issue, err := github.FetchIssue(ctx, s.IssueNumber)
 	if err != nil {
-		return nil, fmt.Errorf("gh issue view %s: %w", s.IssueNumber, err)
-	}
-
-	var issue ghIssue
-	if err := json.Unmarshal(out, &issue); err != nil {
-		return nil, fmt.Errorf("parsing issue JSON: %w", err)
+		return nil, fmt.Errorf("fetching issue %s: %w", s.IssueNumber, err)
 	}
 
 	slug := slugFromTitle(issue.Title)
@@ -43,22 +30,27 @@ func (s *GitHubSource) Fetch(ctx context.Context) (*Input, error) {
 }
 
 func slugFromTitle(title string) string {
-	title = strings.ToLower(title)
-	var sb strings.Builder
-	for _, r := range title {
-		if (r >= 'a' && r <= 'z') || (r >= '0' && r <= '9') {
-			sb.WriteRune(r)
-		} else if sb.Len() > 0 {
-			last := rune(sb.String()[sb.Len()-1])
-			if last != '-' {
-				sb.WriteRune('-')
-			}
+	var sb []byte
+	for i := 0; i < len(title); i++ {
+		c := title[i]
+		if (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') {
+			sb = append(sb, c)
+		} else if c >= 'A' && c <= 'Z' {
+			sb = append(sb, c+32) // to lower
+		} else if len(sb) > 0 && sb[len(sb)-1] != '-' {
+			sb = append(sb, '-')
 		}
 	}
-	s := strings.Trim(sb.String(), "-")
+	// trim trailing dash
+	for len(sb) > 0 && sb[len(sb)-1] == '-' {
+		sb = sb[:len(sb)-1]
+	}
+	s := string(sb)
 	if len(s) > 40 {
 		s = s[:40]
-		s = strings.TrimRight(s, "-")
+		for len(s) > 0 && s[len(s)-1] == '-' {
+			s = s[:len(s)-1]
+		}
 	}
 	if s == "" {
 		return "issue"

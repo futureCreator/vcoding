@@ -2,7 +2,6 @@ package cli
 
 import (
 	"fmt"
-	"os"
 	"os/exec"
 
 	"github.com/epmk/vcoding/internal/config"
@@ -59,10 +58,6 @@ func runDoctor(cmd *cobra.Command, args []string) error {
 		apiKey := cfg.APIKey()
 		check("OPENROUTER_API_KEY set", apiKey != "", "set environment variable OPENROUTER_API_KEY")
 	}
-
-	// 5. GITHUB_TOKEN
-	token := os.Getenv("GITHUB_TOKEN")
-	check("GITHUB_TOKEN set", token != "", "set environment variable GITHUB_TOKEN")
 
 	fmt.Println()
 	if allOK {

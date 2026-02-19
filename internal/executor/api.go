@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"sort"
 	"strings"
 	"time"
 
@@ -139,15 +140,35 @@ func (e *APIExecutor) resolvePrompt(template string) (string, error) {
 	return "", fmt.Errorf("prompt template %q not found", template)
 }
 
+// ResolvePrompt exposes prompt lookup for external callers (e.g. token budget accounting).
+func (e *APIExecutor) ResolvePrompt(name string) (string, bool) {
+	content, ok := e.Prompts[name]
+	return content, ok
+}
+
+// diffKeys are virtual input keys that should be rendered as diff code blocks.
+var diffKeys = map[string]string{
+	"git:diff":      "git diff",
+	"git:diff:base": "git diff (base)",
+}
+
 func buildUserContent(req *Request) string {
 	var sb strings.Builder
-	for name, content := range req.InputFiles {
-		sb.WriteString(fmt.Sprintf("## %s\n\n%s\n\n", name, content))
+	// Sort keys for deterministic output
+	keys := make([]string, 0, len(req.InputFiles))
+	for k := range req.InputFiles {
+		keys = append(keys, k)
 	}
-	if req.GitDiff != "" {
-		sb.WriteString("## git diff\n\n```diff\n")
-		sb.WriteString(req.GitDiff)
-		sb.WriteString("\n```\n")
+	sort.Strings(keys)
+	for _, name := range keys {
+		content := req.InputFiles[name]
+		if label, isDiff := diffKeys[name]; isDiff {
+			if content != "" {
+				sb.WriteString(fmt.Sprintf("## %s\n\n```diff\n%s\n```\n\n", label, content))
+			}
+		} else {
+			sb.WriteString(fmt.Sprintf("## %s\n\n%s\n\n", name, content))
+		}
 	}
 	return sb.String()
 }

@@ -91,4 +91,3 @@ Project `.vcoding/config.yaml` > User `~/.vcoding/config.yaml` > Built-in defaul
 ## Environment Variables
 
 - `OPENROUTER_API_KEY` — Required for API executor
-- `GITHUB_TOKEN` — Required for GitHub operations (or gh CLI auth)

@@ -69,10 +69,10 @@ func (e *Engine) Execute(ctx context.Context, pipelineCtx *Context) error {
 		}
 
 		sr := run.StepResult{
-			Name:     step.Name,
-			Status:   "completed",
-			Cost:     cost,
-			Duration: duration,
+			Name:       step.Name,
+			Status:     "completed",
+			Cost:       cost,
+			DurationMS: duration.Milliseconds(),
 		}
 		if err := e.Run.AddStepResult(sr); err != nil {
 			vlog.Warn("failed to save step result", "step", step.Name, "err", err)
@@ -102,21 +102,21 @@ func (e *Engine) runExecutorStep(ctx context.Context, step types.Step, pipelineC
 	}
 	_ = systemPrompt
 
-	inputFiles, gitDiff, err := pipelineCtx.ResolveInput(step.Input)
+	inputFiles, err := pipelineCtx.ResolveInput(step.Input)
 	if err != nil {
 		return "", 0, err
 	}
 
 	// Apply token budget truncation for API steps
 	if step.Executor == "api" && e.Config.MaxContextTokens > 0 {
-		inputFiles = TruncateToTokenBudget(inputFiles, "", e.Config.MaxContextTokens)
+		systemPrompt, _ := resolvePromptForBudget(e, step)
+		inputFiles = TruncateToTokenBudget(inputFiles, systemPrompt, e.Config.MaxContextTokens)
 	}
 
 	req := &executor.Request{
 		Step:       step,
 		RunDir:     e.Run.Dir,
 		InputFiles: inputFiles,
-		GitDiff:    gitDiff,
 	}
 
 	result, err := exec.Execute(ctx, req)
@@ -138,8 +138,13 @@ func (e *Engine) runExecutorStep(ctx context.Context, step types.Step, pipelineC
 }
 
 func (e *Engine) runPRStep(ctx context.Context, step types.Step) (prURL string, err error) {
-	// Delegate to github package via a registered executor or direct call
-	// This is handled by the PRExecutor registered under "github-pr"
+	// Generate PR body via body_template if specified
+	if step.BodyTemplate != "" {
+		if genErr := e.generatePRBody(ctx, step); genErr != nil {
+			vlog.Warn("failed to generate PR body from template", "template", step.BodyTemplate, "err", genErr)
+		}
+	}
+
 	exec, ok := e.Executors["github-pr"]
 	if !ok {
 		return "", fmt.Errorf("github-pr executor not registered")
@@ -147,10 +152,15 @@ func (e *Engine) runPRStep(ctx context.Context, step types.Step) (prURL string, 
 
 	inputFiles := map[string]string{}
 	if step.TitleFrom != "" {
-		content, readErr := e.Run.ReadFile(step.TitleFrom)
-		if readErr == nil {
+		if content, readErr := e.Run.ReadFile(step.TitleFrom); readErr == nil {
 			inputFiles[step.TitleFrom] = content
 		}
+	}
+	// Prefer generated PR.md; fall back to PLAN.md
+	if content, readErr := e.Run.ReadFile("PR.md"); readErr == nil {
+		inputFiles["PR.md"] = content
+	} else if content, readErr := e.Run.ReadFile("PLAN.md"); readErr == nil {
+		inputFiles["PLAN.md"] = content
 	}
 
 	req := &executor.Request{
@@ -164,6 +174,62 @@ func (e *Engine) runPRStep(ctx context.Context, step types.Step) (prURL string, 
 		return "", err
 	}
 	return strings.TrimSpace(result.Output), nil
+}
+
+// generatePRBody calls the API executor with the body_template prompt and PLAN.md
+// to produce PR.md in the run directory.
+func (e *Engine) generatePRBody(ctx context.Context, step types.Step) error {
+	apiExec, ok := e.Executors["api"]
+	if !ok {
+		return fmt.Errorf("api executor not registered")
+	}
+
+	planContent, err := e.Run.ReadFile("PLAN.md")
+	if err != nil {
+		return fmt.Errorf("reading PLAN.md: %w", err)
+	}
+
+	summaryStep := types.Step{
+		Name:           "pr-body-generation",
+		Executor:       "api",
+		PromptTemplate: step.BodyTemplate,
+		Model:          step.Model,
+	}
+	req := &executor.Request{
+		Step:   summaryStep,
+		RunDir: e.Run.Dir,
+		InputFiles: map[string]string{
+			"PLAN.md": planContent,
+		},
+	}
+
+	result, err := apiExec.Execute(ctx, req)
+	if err != nil {
+		return fmt.Errorf("generating PR body: %w", err)
+	}
+
+	if writeErr := e.Run.WriteFile("PR.md", result.Output); writeErr != nil {
+		return fmt.Errorf("writing PR.md: %w", writeErr)
+	}
+	return nil
+}
+
+// resolvePromptForBudget returns the system prompt text for token budget accounting.
+func resolvePromptForBudget(e *Engine, step types.Step) (string, bool) {
+	if step.PromptTemplate == "" {
+		return "", false
+	}
+	apiExec, ok := e.Executors["api"]
+	if !ok {
+		return "", false
+	}
+	type prompter interface {
+		ResolvePrompt(name string) (string, bool)
+	}
+	if p, ok := apiExec.(prompter); ok {
+		return p.ResolvePrompt(step.PromptTemplate)
+	}
+	return "", false
 }
 
 // LoadPipeline resolves a pipeline by name from user/project overrides or embedded defaults.

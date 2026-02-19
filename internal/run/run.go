@@ -32,13 +32,13 @@ type Meta struct {
 
 // StepResult records the outcome of a single step.
 type StepResult struct {
-	Name      string        `json:"name"`
-	Status    string        `json:"status"` // "completed" | "failed" | "skipped"
-	Cost      float64       `json:"cost"`
-	TokensIn  int           `json:"tokens_in"`
-	TokensOut int           `json:"tokens_out"`
-	Duration  time.Duration `json:"duration_ms"`
-	Error     string        `json:"error,omitempty"`
+	Name       string  `json:"name"`
+	Status     string  `json:"status"` // "completed" | "failed" | "skipped"
+	Cost       float64 `json:"cost"`
+	TokensIn   int     `json:"tokens_in"`
+	TokensOut  int     `json:"tokens_out"`
+	DurationMS int64   `json:"duration_ms"`
+	Error      string  `json:"error,omitempty"`
 }
 
 // New creates a new run directory under .vcoding/runs/.

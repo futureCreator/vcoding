@@ -25,9 +25,11 @@ func (e *PRExecutor) Execute(ctx context.Context, req *executor.Request) (*execu
 		title = "chore: automated changes"
 	}
 
-	// Build PR body (body_template was already resolved to PLAN.md summary by engine)
+	// Build PR body: prefer PR.md (generated from body_template), fall back to PLAN.md
 	body := ""
-	if planContent, ok := req.InputFiles["PLAN.md"]; ok {
+	if prContent, ok := req.InputFiles["PR.md"]; ok {
+		body = prContent
+	} else if planContent, ok := req.InputFiles["PLAN.md"]; ok {
 		body = planContent
 	}
 
