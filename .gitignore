@@ -1,0 +1,4 @@
+vcoding
+.vcoding/runs/
+.vcoding/vcoding.log
+*.test
