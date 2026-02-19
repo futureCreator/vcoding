@@ -41,7 +41,7 @@ func TestStepDone_ContainsModel(t *testing.T) {
 func TestStepDone_ZeroCostShowsDash(t *testing.T) {
 	var buf bytes.Buffer
 	d := newTestDisplay(&buf)
-	d.StepDone("build", "shell", "", 0, time.Second)
+	d.StepDone("build", "api", "", 0, time.Second)
 	out := buf.String()
 	if !strings.Contains(out, "—") {
 		t.Errorf("StepDone expected dash for zero cost, got: %q", out)
@@ -51,9 +51,9 @@ func TestStepDone_ZeroCostShowsDash(t *testing.T) {
 func TestStepFailed_ContainsModel(t *testing.T) {
 	var buf bytes.Buffer
 	d := newTestDisplay(&buf)
-	d.StepFailed("edit", "claude-code", errors.New("timed out"))
+	d.StepFailed("edit", "anthropic/claude-sonnet-4-6", errors.New("timed out"))
 	out := buf.String()
-	if !strings.Contains(out, "claude-code") {
+	if !strings.Contains(out, "anthropic/claude-sonnet-4-6") {
 		t.Errorf("StepFailed output missing model: %q", out)
 	}
 	if !strings.Contains(out, "timed out") {

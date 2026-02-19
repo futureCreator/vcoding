@@ -14,7 +14,6 @@ type Config struct {
 	Provider         ProviderConfig   `yaml:"provider"`
 	Roles            RolesConfig      `yaml:"roles"`
 	GitHub           GitHubConfig     `yaml:"github"`
-	Executors        ExecutorsConfig  `yaml:"executors"`
 	Language         LanguageConfig   `yaml:"language"`
 	ProjectContext   ProjectCtxConfig `yaml:"project_context"`
 	MaxContextTokens int              `yaml:"max_context_tokens"`
@@ -31,23 +30,11 @@ type RolesConfig struct {
 	Planner  string `yaml:"planner"`
 	Reviewer string `yaml:"reviewer"`
 	Editor   string `yaml:"editor"`
-	Auditor  string `yaml:"auditor"`
 }
 
 type GitHubConfig struct {
 	DefaultRepo string `yaml:"default_repo"`
 	BaseBranch  string `yaml:"base_branch"`
-}
-
-type ExecutorEntry struct {
-	Command                    string `yaml:"command"`
-	Model                      string `yaml:"model"`
-	Timeout                    string `yaml:"timeout"`
-	DangerouslySkipPermissions *bool  `yaml:"dangerously_skip_permissions"`
-}
-
-type ExecutorsConfig struct {
-	ClaudeCode ExecutorEntry `yaml:"claude-code"`
 }
 
 type LanguageConfig struct {
@@ -139,18 +126,9 @@ func defaults() *Config {
 			Planner:  "anthropic/claude-opus-4-6",
 			Reviewer: "deepseek/deepseek-r1",
 			Editor:   "z-ai/glm-5",
-			Auditor:  "openai/gpt-5.2-codex",
 		},
 		GitHub: GitHubConfig{
 			BaseBranch: "main",
-		},
-		Executors: ExecutorsConfig{
-			ClaudeCode: ExecutorEntry{
-				Command:                    "claude",
-				Model:                      "claude-sonnet-4-6",
-				Timeout:                    "300s",
-				DangerouslySkipPermissions: boolPtr(true),
-			},
 		},
 		Language: LanguageConfig{
 			Artifacts:       "en",
@@ -166,5 +144,3 @@ func defaults() *Config {
 		LogLevel:         "info",
 	}
 }
-
-func boolPtr(b bool) *bool { return &b }

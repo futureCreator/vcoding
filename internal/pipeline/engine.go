@@ -27,16 +27,8 @@ type Engine struct {
 
 // stepDisplayModel returns a human-readable label for the step's executor/model,
 // suitable for the terminal output model column.
-// Security: shell steps always return "shell" to avoid exposing raw commands.
 func (e *Engine) stepDisplayModel(step types.Step) string {
 	switch {
-	case step.Type == "github-pr":
-		return "github-pr"
-	case step.Executor == "claude-code":
-		return "claude-code"
-	case step.Executor == "shell":
-		// Never expose raw shell commands; they may contain secrets or sensitive paths.
-		return "shell"
 	case step.Executor == "api":
 		model := e.resolveModel(step.Model)
 		if model == "" {
@@ -53,7 +45,6 @@ func (e *Engine) stepDisplayModel(step types.Step) string {
 // Execute runs all steps in sequence.
 func (e *Engine) Execute(ctx context.Context, pipelineCtx *Context) error {
 	startTime := time.Now()
-	var prURL string
 
 	for _, step := range e.Pipeline.Steps {
 		select {
@@ -70,17 +61,9 @@ func (e *Engine) Execute(ctx context.Context, pipelineCtx *Context) error {
 		var detail string
 		var cost float64
 
-		switch {
-		case step.Type == "github-pr":
-			detail, stepErr = e.runPRStep(ctx, step)
-			if stepErr == nil {
-				prURL = detail
-			}
-
-		case step.Executor == "":
+		if step.Executor == "" {
 			stepErr = fmt.Errorf("step %q has no executor", step.Name)
-
-		default:
+		} else {
 			detail, cost, stepErr = e.runExecutorStep(ctx, step, pipelineCtx)
 		}
 
@@ -112,11 +95,11 @@ func (e *Engine) Execute(ctx context.Context, pipelineCtx *Context) error {
 		vlog.Warn("failed to mark run complete", "err", err)
 	}
 
-	e.Display.Summary(e.Run.Meta.TotalCost, time.Since(startTime), prURL)
+	e.Display.Summary(e.Run.Meta.TotalCost, time.Since(startTime))
 	return nil
 }
 
-// resolveModel replaces role placeholders ($planner, $reviewer, $editor, $auditor)
+// resolveModel replaces role placeholders ($planner, $reviewer, $editor)
 // with the corresponding model ID from config. If the model string is not a
 // placeholder, it is returned unchanged.
 func (e *Engine) resolveModel(model string) string {
@@ -127,8 +110,6 @@ func (e *Engine) resolveModel(model string) string {
 		return e.Config.Roles.Reviewer
 	case "$editor":
 		return e.Config.Roles.Editor
-	case "$auditor":
-		return e.Config.Roles.Auditor
 	}
 	return model
 }
@@ -146,10 +127,10 @@ func (e *Engine) runExecutorStep(ctx context.Context, step types.Step, pipelineC
 		return "", 0, err
 	}
 
-	// Apply token budget truncation for API steps
+	// Apply token budget truncation for API steps.
 	if step.Executor == "api" && e.Config.MaxContextTokens > 0 {
-		systemPrompt, _ := resolvePromptForBudget(e, step)
-		inputFiles = TruncateToTokenBudget(inputFiles, systemPrompt, e.Config.MaxContextTokens)
+		sp, _ := resolvePromptForBudget(e, step)
+		inputFiles = TruncateToTokenBudget(inputFiles, sp, e.Config.MaxContextTokens)
 	}
 
 	req := &executor.Request{
@@ -175,83 +156,6 @@ func (e *Engine) runExecutorStep(ctx context.Context, step types.Step, pipelineC
 	}
 
 	return detail, result.Cost, nil
-}
-
-func (e *Engine) runPRStep(ctx context.Context, step types.Step) (prURL string, err error) {
-	// Generate PR body via body_template if specified
-	if step.BodyTemplate != "" {
-		if genErr := e.generatePRBody(ctx, step); genErr != nil {
-			vlog.Warn("failed to generate PR body from template", "template", step.BodyTemplate, "err", genErr)
-		}
-	}
-
-	exec, ok := e.Executors["github-pr"]
-	if !ok {
-		return "", fmt.Errorf("github-pr executor not registered")
-	}
-
-	inputFiles := map[string]string{}
-	if step.TitleFrom != "" {
-		if content, readErr := e.Run.ReadFile(step.TitleFrom); readErr == nil {
-			inputFiles[step.TitleFrom] = content
-		}
-	}
-	// Prefer generated PR.md; fall back to PLAN.md
-	if content, readErr := e.Run.ReadFile("PR.md"); readErr == nil {
-		inputFiles["PR.md"] = content
-	} else if content, readErr := e.Run.ReadFile("PLAN.md"); readErr == nil {
-		inputFiles["PLAN.md"] = content
-	}
-
-	req := &executor.Request{
-		Step:       step,
-		RunDir:     e.Run.Dir,
-		InputFiles: inputFiles,
-	}
-
-	result, err := exec.Execute(ctx, req)
-	if err != nil {
-		return "", err
-	}
-	return strings.TrimSpace(result.Output), nil
-}
-
-// generatePRBody calls the API executor with the body_template prompt and PLAN.md
-// to produce PR.md in the run directory.
-func (e *Engine) generatePRBody(ctx context.Context, step types.Step) error {
-	apiExec, ok := e.Executors["api"]
-	if !ok {
-		return fmt.Errorf("api executor not registered")
-	}
-
-	planContent, err := e.Run.ReadFile("PLAN.md")
-	if err != nil {
-		return fmt.Errorf("reading PLAN.md: %w", err)
-	}
-
-	summaryStep := types.Step{
-		Name:           "pr-body-generation",
-		Executor:       "api",
-		PromptTemplate: step.BodyTemplate,
-		Model:          step.Model,
-	}
-	req := &executor.Request{
-		Step:   summaryStep,
-		RunDir: e.Run.Dir,
-		InputFiles: map[string]string{
-			"PLAN.md": planContent,
-		},
-	}
-
-	result, err := apiExec.Execute(ctx, req)
-	if err != nil {
-		return fmt.Errorf("generating PR body: %w", err)
-	}
-
-	if writeErr := e.Run.WriteFile("PR.md", result.Output); writeErr != nil {
-		return fmt.Errorf("writing PR.md: %w", writeErr)
-	}
-	return nil
 }
 
 // resolvePromptForBudget returns the system prompt text for token budget accounting.

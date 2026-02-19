@@ -52,16 +52,6 @@ func Diff() (string, error) {
 	return combined, nil
 }
 
-// DiffFromBase returns the diff between the current branch and baseBranch.
-func DiffFromBase(baseBranch string) (string, error) {
-	return gitOutput("diff", baseBranch+"...HEAD")
-}
-
-// IsDirtyWorkingTree returns true if there are uncommitted changes.
-func IsDirtyWorkingTree() (bool, error) {
-	return isDirty()
-}
-
 func isDirty() (bool, error) {
 	out, err := gitOutput("status", "--porcelain")
 	if err != nil {

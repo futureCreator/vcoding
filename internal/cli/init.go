@@ -42,17 +42,9 @@ roles:
   planner: anthropic/claude-opus-4-6
   reviewer: deepseek/deepseek-r1
   editor: z-ai/glm-5
-  auditor: openai/gpt-5.2-codex
 
 github:
   base_branch: main
-
-executors:
-  claude-code:
-    command: claude
-    model: claude-sonnet-4-6
-    timeout: 300s
-    dangerously_skip_permissions: true
 
 language:
   artifacts: en

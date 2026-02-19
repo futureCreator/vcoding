@@ -6,7 +6,6 @@ import (
 )
 
 var doPipeline string
-var doForce bool
 var doVerbose bool
 
 var doCmd = &cobra.Command{
@@ -16,12 +15,11 @@ var doCmd = &cobra.Command{
 	SilenceUsage: true,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		src := &source.SpecSource{Path: args[0]}
-		return runPipeline(cmd.Context(), src, doPipeline, doForce, doVerbose)
+		return runPipeline(cmd.Context(), src, doPipeline, doVerbose)
 	},
 }
 
 func init() {
 	doCmd.Flags().StringVarP(&doPipeline, "pipeline", "p", "default", "Pipeline to use")
-	doCmd.Flags().BoolVar(&doForce, "force", false, "Skip dirty working tree check")
 	doCmd.Flags().BoolVarP(&doVerbose, "verbose", "v", false, "Stream executor output to terminal")
 }

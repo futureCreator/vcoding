@@ -20,7 +20,6 @@ func TestStepDisplayModel(t *testing.T) {
 		Planner:  "anthropic/claude-opus-4-6",
 		Reviewer: "openai/gpt-4o",
 		Editor:   "anthropic/claude-sonnet-4-6",
-		Auditor:  "anthropic/claude-haiku-4-5",
 	}
 	e := newTestEngine(roles)
 
@@ -29,21 +28,6 @@ func TestStepDisplayModel(t *testing.T) {
 		step     types.Step
 		expected string
 	}{
-		{
-			name:     "github-pr type",
-			step:     types.Step{Type: "github-pr"},
-			expected: "github-pr",
-		},
-		{
-			name:     "claude-code executor",
-			step:     types.Step{Executor: "claude-code"},
-			expected: "claude-code",
-		},
-		{
-			name:     "shell executor never exposes command",
-			step:     types.Step{Executor: "shell", Command: "rm -rf / --secret-token=abc"},
-			expected: "shell",
-		},
 		{
 			name:     "api executor with literal model",
 			step:     types.Step{Executor: "api", Model: "openai/gpt-4o"},
