@@ -17,7 +17,7 @@ import (
 )
 
 // runPipeline is the shared entry point for pick and do commands.
-func runPipeline(ctx context.Context, src source.Source, pipelineName string, force bool) error {
+func runPipeline(ctx context.Context, src source.Source, pipelineName string, force bool, verbose bool) error {
 	// Load config
 	cfg, err := config.Load()
 	if err != nil {
@@ -115,7 +115,7 @@ func runPipeline(ctx context.Context, src source.Source, pipelineName string, fo
 	}
 
 	// Run pipeline
-	disp := pipeline.NewDisplay(input.Title)
+	disp := pipeline.NewDisplay(input.Title, verbose)
 	disp.Header()
 
 	engine := &pipeline.Engine{
@@ -124,6 +124,7 @@ func runPipeline(ctx context.Context, src source.Source, pipelineName string, fo
 		Executors: executors,
 		Run:       r,
 		Display:   disp,
+		Verbose:   verbose,
 	}
 
 	return engine.Execute(ctx, pipelineCtx)

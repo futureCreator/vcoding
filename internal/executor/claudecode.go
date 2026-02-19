@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"os"
 	"os/exec"
 	"strings"
 	"time"
@@ -49,10 +50,20 @@ func (e *ClaudeCodeExecutor) Execute(ctx context.Context, req *Request) (*Result
 
 	var stdout, stderr bytes.Buffer
 	cmd.Stdout = &stdout
-	cmd.Stderr = &stderr
+	if req.Verbose {
+		// Stream stderr to the terminal so the user can see claude's progress.
+		// Stdout is still captured for JSON result parsing.
+		cmd.Stderr = os.Stderr
+	} else {
+		cmd.Stderr = &stderr
+	}
 
 	if err := cmd.Run(); err != nil {
-		return nil, fmt.Errorf("claude-code executor: %w\nstderr: %s", err, stderr.String())
+		errDetail := stderr.String()
+		if req.Verbose {
+			errDetail = "(see stderr above)"
+		}
+		return nil, fmt.Errorf("claude-code executor: %w\nstderr: %s", err, errDetail)
 	}
 
 	output := stdout.String()
@@ -71,7 +82,7 @@ func (e *ClaudeCodeExecutor) Execute(ctx context.Context, req *Request) (*Result
 
 func parseTimeout(s string) (time.Duration, error) {
 	if s == "" {
-		return 300 * time.Second, nil
+		return 1800 * time.Second, nil
 	}
 	return time.ParseDuration(s)
 }
