@@ -144,6 +144,7 @@ func loadPipeline(cfg *config.Config, name string) (*pipeline.Pipeline, error) {
 }
 
 func buildExecutors(cfg *config.Config, prompts map[string]string, slug, issueRef string) map[string]executor.Executor {
+	projectDir, _ := os.Getwd()
 	execs := map[string]executor.Executor{
 		"api": &executor.APIExecutor{
 			Config:  cfg,
@@ -152,7 +153,9 @@ func buildExecutors(cfg *config.Config, prompts map[string]string, slug, issueRe
 		"claude-code": &executor.ClaudeCodeExecutor{
 			Config: cfg,
 		},
-		"shell": &executor.ShellExecutor{},
+		"shell": &executor.ShellExecutor{
+			ProjectDir: projectDir,
+		},
 		"github-pr": &github.PRExecutor{
 			Config:   cfg,
 			Slug:     slug,

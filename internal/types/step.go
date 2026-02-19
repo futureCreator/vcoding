@@ -10,6 +10,7 @@ type Step struct {
 	Input          []string `yaml:"input"`
 	Output         string   `yaml:"output,omitempty"`
 	Command        string   `yaml:"command,omitempty"`
+	WorkDir        string   `yaml:"work_dir,omitempty"`
 	Type           string   `yaml:"type,omitempty"`
 	TitleFrom      string   `yaml:"title_from,omitempty"`
 	BodyTemplate   string   `yaml:"body_template,omitempty"`

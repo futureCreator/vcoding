@@ -126,9 +126,12 @@ func defaults() *Config {
 			BaseBranch: "main",
 		},
 		Executors: ExecutorsConfig{
+			// WARNING: --dangerously-skip-permissions bypasses ALL permission checks.
+			// Only use in isolated CI environments with no sensitive data access.
+			// Override via ~/.vcoding/config.yaml or .vcoding/config.yaml for local dev.
 			ClaudeCode: ExecutorEntry{
 				Command: "claude",
-				Args:    []string{"-p", "--output-format", "json"},
+				Args:    []string{"-p", "--output-format", "json", "--dangerously-skip-permissions"},
 				Timeout: "300s",
 			},
 		},

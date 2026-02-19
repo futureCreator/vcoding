@@ -53,8 +53,20 @@ func CreateBranch(ctx context.Context, branch, base string) error {
 		return fmt.Errorf("branch %q already exists", branch)
 	}
 
+	// Check if base branch exists (repo may have no commits yet)
+	baseExists := false
+	if base != "" {
+		verifyBase := exec.CommandContext(ctx, "git", "rev-parse", "--verify", base)
+		baseExists = verifyBase.Run() == nil
+	}
+
 	// Create and switch to new branch
-	cmd := exec.CommandContext(ctx, "git", "checkout", "-b", branch, base)
+	var cmd *exec.Cmd
+	if baseExists {
+		cmd = exec.CommandContext(ctx, "git", "checkout", "-b", branch, base)
+	} else {
+		cmd = exec.CommandContext(ctx, "git", "checkout", "-b", branch)
+	}
 	if out, err := cmd.CombinedOutput(); err != nil {
 		return fmt.Errorf("git checkout -b %s: %w\n%s", branch, err, string(out))
 	}

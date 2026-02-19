@@ -4,12 +4,17 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"os"
 	"os/exec"
 	"time"
 )
 
 // ShellExecutor runs a shell command and captures its output.
-type ShellExecutor struct{}
+type ShellExecutor struct {
+	// ProjectDir is the working directory for shell commands.
+	// If empty, the current process working directory is used.
+	ProjectDir string
+}
 
 func (e *ShellExecutor) Execute(ctx context.Context, req *Request) (*Result, error) {
 	start := time.Now()
@@ -20,7 +25,18 @@ func (e *ShellExecutor) Execute(ctx context.Context, req *Request) (*Result, err
 	}
 
 	cmd := exec.CommandContext(ctx, "sh", "-c", command)
-	cmd.Dir = req.RunDir
+
+	// Determine working directory: step override > executor default > cwd
+	switch {
+	case req.Step.WorkDir != "":
+		cmd.Dir = req.Step.WorkDir
+	case e.ProjectDir != "":
+		cmd.Dir = e.ProjectDir
+	default:
+		if cwd, err := os.Getwd(); err == nil {
+			cmd.Dir = cwd
+		}
+	}
 
 	var stdout, stderr bytes.Buffer
 	cmd.Stdout = &stdout
