@@ -33,12 +33,12 @@ func (e *ClaudeCodeExecutor) Execute(ctx context.Context, req *Request) (*Result
 	}
 	args := entry.Args
 	if len(args) == 0 {
-		args = []string{"-p", "--output-format", "json"}
+		args = []string{"-p", "--output-format", "json", "--dangerously-skip-permissions"}
 	}
 
 	timeout, err := parseTimeout(entry.Timeout)
 	if err != nil {
-		timeout = 300 * time.Second
+		timeout = 1800 * time.Second
 	}
 
 	execCtx, cancel := context.WithTimeout(ctx, timeout)
@@ -46,7 +46,6 @@ func (e *ClaudeCodeExecutor) Execute(ctx context.Context, req *Request) (*Result
 
 	cmd := exec.CommandContext(execCtx, cmdName, args...)
 	cmd.Stdin = bytes.NewBufferString(prompt)
-	cmd.Dir = req.RunDir
 
 	var stdout, stderr bytes.Buffer
 	cmd.Stdout = &stdout
