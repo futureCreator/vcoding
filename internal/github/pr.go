@@ -47,10 +47,14 @@ func CreatePR(ctx context.Context, opts PROptions) (string, error) {
 
 // CreateBranch creates a new git branch and pushes it.
 func CreateBranch(ctx context.Context, branch, base string) error {
-	// Check if branch already exists
+	// Check if branch already exists — if so, just check it out
 	checkCmd := exec.CommandContext(ctx, "git", "rev-parse", "--verify", branch)
 	if err := checkCmd.Run(); err == nil {
-		return fmt.Errorf("branch %q already exists", branch)
+		checkoutCmd := exec.CommandContext(ctx, "git", "checkout", branch)
+		if out, err := checkoutCmd.CombinedOutput(); err != nil {
+			return fmt.Errorf("git checkout %s: %w\n%s", branch, err, string(out))
+		}
+		return nil
 	}
 
 	// Fetch latest base from remote before branching
