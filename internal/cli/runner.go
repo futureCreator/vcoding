@@ -152,7 +152,8 @@ func buildExecutors(cfg *config.Config, prompts map[string]string, slug, issueRe
 			Prompts: prompts,
 		},
 		"claude-code": &executor.ClaudeCodeExecutor{
-			Config: cfg,
+			Config:  cfg,
+			Prompts: prompts,
 		},
 		"shell": &executor.ShellExecutor{
 			ProjectDir: projectDir,

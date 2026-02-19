@@ -141,13 +141,6 @@ func (e *Engine) runExecutorStep(ctx context.Context, step types.Step, pipelineC
 		return "", 0, fmt.Errorf("unknown executor %q", step.Executor)
 	}
 
-	// Resolve prompt for API steps
-	var systemPrompt string
-	if step.PromptTemplate != "" {
-		// Prompt is pre-loaded into APIExecutor; no need to re-resolve here
-	}
-	_ = systemPrompt
-
 	inputFiles, err := pipelineCtx.ResolveInput(step.Input)
 	if err != nil {
 		return "", 0, err

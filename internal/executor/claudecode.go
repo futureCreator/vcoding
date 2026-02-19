@@ -15,7 +15,8 @@ import (
 
 // ClaudeCodeExecutor delegates implementation to the claude CLI.
 type ClaudeCodeExecutor struct {
-	Config *config.Config
+	Config  *config.Config
+	Prompts map[string]string // template name → content (same as APIExecutor)
 }
 
 type claudeCodeOutput struct {
@@ -32,9 +33,23 @@ func (e *ClaudeCodeExecutor) Execute(ctx context.Context, req *Request) (*Result
 	if cmdName == "" {
 		cmdName = "claude"
 	}
-	args := entry.Args
-	if len(args) == 0 {
-		args = []string{"-p", "--output-format", "json", "--dangerously-skip-permissions"}
+
+	// Always build args programmatically so model and system-prompt are never missing.
+	args := []string{"-p", "--output-format", "json", "--dangerously-skip-permissions"}
+
+	if req.Step.Model != "" {
+		args = append(args, "--model", req.Step.Model)
+	}
+
+	if req.Step.PromptTemplate != "" && e.Prompts != nil {
+		if content, ok := e.Prompts[req.Step.PromptTemplate]; ok && content != "" {
+			args = append(args, "--system-prompt", content)
+		}
+	}
+
+	// Allow extra flags from config (e.g. --verbose) without clobbering required flags above.
+	if len(entry.Args) > 0 {
+		args = append(args, entry.Args...)
 	}
 
 	timeout, err := parseTimeout(entry.Timeout)
