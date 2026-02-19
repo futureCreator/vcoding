@@ -3,9 +3,4 @@ vcoding
 .vcoding/vcoding.log
 *.test
 
-
-SPEC.md
-PLAN.md
 CLAUDE.md
-REVIEW.md
-AUDIT.md
