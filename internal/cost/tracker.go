@@ -18,8 +18,9 @@ type ModelPricing struct {
 var defaultPricing = map[string]ModelPricing{
 	"anthropic/claude-opus-4-6":   {InputPerToken: 15.0 / 1_000_000, OutputPerToken: 75.0 / 1_000_000},
 	"anthropic/claude-sonnet-4-6": {InputPerToken: 3.0 / 1_000_000, OutputPerToken: 15.0 / 1_000_000},
-	"moonshotai/kimi-k2.5":        {InputPerToken: 0.14 / 1_000_000, OutputPerToken: 0.14 / 1_000_000},
-	"openai/codex-5.3":            {InputPerToken: 3.0 / 1_000_000, OutputPerToken: 15.0 / 1_000_000},
+	"deepseek/deepseek-r1":        {InputPerToken: 0.50 / 1_000_000, OutputPerToken: 2.00 / 1_000_000},
+	"z-ai/glm-5":                  {InputPerToken: 0.30 / 1_000_000, OutputPerToken: 2.55 / 1_000_000},
+	"openai/gpt-5.2-codex":        {InputPerToken: 1.75 / 1_000_000, OutputPerToken: 14.0 / 1_000_000},
 }
 
 // FromHeader extracts cost from the x-openrouter-cost header value.
