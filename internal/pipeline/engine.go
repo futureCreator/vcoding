@@ -22,6 +22,7 @@ type Engine struct {
 	Executors map[string]executor.Executor
 	Run       *run.Run
 	Display   *Display
+	Verbose   bool
 }
 
 // stepDisplayModel returns a human-readable label for the step's executor/model,
@@ -162,6 +163,7 @@ func (e *Engine) runExecutorStep(ctx context.Context, step types.Step, pipelineC
 		Step:       step,
 		RunDir:     e.Run.Dir,
 		InputFiles: inputFiles,
+		Verbose:    e.Verbose,
 	}
 
 	result, err := exec.Execute(ctx, req)

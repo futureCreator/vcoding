@@ -12,13 +12,16 @@ import (
 
 // Display handles terminal progress output for the pipeline.
 type Display struct {
-	w     io.Writer
-	title string
+	w       io.Writer
+	title   string
+	verbose bool
+	stop    chan struct{}
+	done    chan struct{}
 }
 
 // NewDisplay creates a display that writes to stdout.
-func NewDisplay(title string) *Display {
-	return &Display{w: os.Stdout, title: title}
+func NewDisplay(title string, verbose bool) *Display {
+	return &Display{w: os.Stdout, title: title, verbose: verbose}
 }
 
 // modelColumnWidth is the fixed display width reserved for the model/executor column.
@@ -49,27 +52,75 @@ func (d *Display) Header() {
 	fmt.Fprintln(d.w, strings.Repeat("─", 76))
 }
 
-// StepStart prints a step-in-progress line.
+// StepStart prints a step-in-progress line and starts an elapsed time ticker.
+// In non-verbose mode, the line is updated in place every second with elapsed time.
+// In verbose mode, a plain line is printed (executor output follows on subsequent lines).
 func (d *Display) StepStart(name, model string) {
 	model = truncateModel(model)
-	fmt.Fprintf(d.w, "⏳ %-12s %-30s %s\n", name, model, "running...")
+	if d.verbose {
+		fmt.Fprintf(d.w, "⏳ %-12s %-30s running...\n", name, model)
+		return
+	}
+	// Print without trailing newline so the ticker can overwrite in place.
+	fmt.Fprintf(d.w, "⏳ %-12s %-30s running...", name, model)
+
+	stop := make(chan struct{})
+	done := make(chan struct{})
+	d.stop = stop
+	d.done = done
+	start := time.Now()
+
+	go func() {
+		defer close(done)
+		ticker := time.NewTicker(time.Second)
+		defer ticker.Stop()
+		for {
+			select {
+			case <-stop:
+				return
+			case <-ticker.C:
+				fmt.Fprintf(d.w, "\r⏳ %-12s %-30s running... %.0fs",
+					name, model, time.Since(start).Seconds())
+			}
+		}
+	}()
 }
 
-// StepDone prints a completed step line.
+// stopTicker stops the elapsed time goroutine and waits for it to finish.
+func (d *Display) stopTicker() {
+	if d.stop != nil {
+		close(d.stop)
+		<-d.done
+		d.stop = nil
+		d.done = nil
+	}
+}
+
+// StepDone prints a completed step line, overwriting the running line in non-verbose mode.
 func (d *Display) StepDone(name, model, detail string, cost float64, duration time.Duration) {
+	d.stopTicker()
 	model = truncateModel(model)
 	costStr := "—"
 	if cost > 0 {
 		costStr = fmt.Sprintf("$%.4f", cost)
 	}
-	fmt.Fprintf(d.w, "✅ %-12s %-30s %-28s %-10s %.1fs\n",
-		name, model, detail, costStr, duration.Seconds())
+	prefix := "\r"
+	if d.verbose {
+		prefix = ""
+	}
+	fmt.Fprintf(d.w, "%s✅ %-12s %-30s %-28s %-10s %.1fs\n",
+		prefix, name, model, detail, costStr, duration.Seconds())
 }
 
-// StepFailed prints a failed step line.
+// StepFailed prints a failed step line, overwriting the running line in non-verbose mode.
 func (d *Display) StepFailed(name, model string, err error) {
+	d.stopTicker()
 	model = truncateModel(model)
-	fmt.Fprintf(d.w, "❌ %-12s %-30s %s\n", name, model, err.Error())
+	prefix := "\r"
+	if d.verbose {
+		prefix = ""
+	}
+	fmt.Fprintf(d.w, "%s❌ %-12s %-30s %s\n", prefix, name, model, err.Error())
 }
 
 // Summary prints the final run summary.

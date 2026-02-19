@@ -7,6 +7,7 @@ import (
 
 var pickPipeline string
 var pickForce bool
+var pickVerbose bool
 
 var pickCmd = &cobra.Command{
 	Use:          "pick <issue-number>",
@@ -15,11 +16,12 @@ var pickCmd = &cobra.Command{
 	SilenceUsage: true,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		src := &source.GitHubSource{IssueNumber: args[0]}
-		return runPipeline(cmd.Context(), src, pickPipeline, pickForce)
+		return runPipeline(cmd.Context(), src, pickPipeline, pickForce, pickVerbose)
 	},
 }
 
 func init() {
 	pickCmd.Flags().StringVarP(&pickPipeline, "pipeline", "p", "default", "Pipeline to use")
 	pickCmd.Flags().BoolVar(&pickForce, "force", false, "Skip dirty working tree check")
+	pickCmd.Flags().BoolVarP(&pickVerbose, "verbose", "v", false, "Stream executor output to terminal")
 }
