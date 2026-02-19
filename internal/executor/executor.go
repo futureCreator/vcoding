@@ -14,10 +14,11 @@ type Executor interface {
 
 // Request carries all inputs for a step execution.
 type Request struct {
-	Step       types.Step
-	RunDir     string
-	InputFiles map[string]string // filename → content
-	Verbose    bool              // stream executor output to terminal
+	Step         types.Step
+	RunDir       string
+	InputFiles   map[string]string // filename → content
+	Verbose      bool              // stream executor output to terminal
+	SystemPrompt string            // optional system/instruction prompt for claude-code executor
 }
 
 // Result holds the output of a step execution.

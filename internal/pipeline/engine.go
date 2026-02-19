@@ -33,6 +33,10 @@ func (e *Engine) stepDisplayModel(step types.Step) string {
 	case step.Type == "github-pr":
 		return "github-pr"
 	case step.Executor == "claude-code":
+		model := e.resolveModel(step.Model)
+		if model != "" {
+			return model
+		}
 		return "claude-code"
 	case step.Executor == "shell":
 		// Never expose raw shell commands; they may contain secrets or sensitive paths.
@@ -116,7 +120,7 @@ func (e *Engine) Execute(ctx context.Context, pipelineCtx *Context) error {
 	return nil
 }
 
-// resolveModel replaces role placeholders ($planner, $reviewer, $editor, $auditor)
+// resolveModel replaces role placeholders ($planner, $reviewer, $editor, $auditor, $implementer)
 // with the corresponding model ID from config. If the model string is not a
 // placeholder, it is returned unchanged.
 func (e *Engine) resolveModel(model string) string {
@@ -129,6 +133,8 @@ func (e *Engine) resolveModel(model string) string {
 		return e.Config.Roles.Editor
 	case "$auditor":
 		return e.Config.Roles.Auditor
+	case "$implementer":
+		return e.Config.Roles.Implementer
 	}
 	return model
 }
@@ -141,29 +147,31 @@ func (e *Engine) runExecutorStep(ctx context.Context, step types.Step, pipelineC
 		return "", 0, fmt.Errorf("unknown executor %q", step.Executor)
 	}
 
-	// Resolve prompt for API steps
-	var systemPrompt string
-	if step.PromptTemplate != "" {
-		// Prompt is pre-loaded into APIExecutor; no need to re-resolve here
-	}
-	_ = systemPrompt
-
 	inputFiles, err := pipelineCtx.ResolveInput(step.Input)
 	if err != nil {
 		return "", 0, err
 	}
 
-	// Apply token budget truncation for API steps
+	// Apply token budget truncation for API steps.
+	var systemPrompt string
 	if step.Executor == "api" && e.Config.MaxContextTokens > 0 {
-		systemPrompt, _ := resolvePromptForBudget(e, step)
-		inputFiles = TruncateToTokenBudget(inputFiles, systemPrompt, e.Config.MaxContextTokens)
+		sp, _ := resolvePromptForBudget(e, step)
+		inputFiles = TruncateToTokenBudget(inputFiles, sp, e.Config.MaxContextTokens)
+	}
+
+	// Resolve system prompt for claude-code steps with a prompt_template.
+	if step.Executor == "claude-code" && step.PromptTemplate != "" {
+		if content, ok := resolvePromptForBudget(e, step); ok {
+			systemPrompt = content
+		}
 	}
 
 	req := &executor.Request{
-		Step:       step,
-		RunDir:     e.Run.Dir,
-		InputFiles: inputFiles,
-		Verbose:    e.Verbose,
+		Step:         step,
+		RunDir:       e.Run.Dir,
+		InputFiles:   inputFiles,
+		Verbose:      e.Verbose,
+		SystemPrompt: systemPrompt,
 	}
 
 	result, err := exec.Execute(ctx, req)

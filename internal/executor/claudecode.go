@@ -25,7 +25,14 @@ type claudeCodeOutput struct {
 func (e *ClaudeCodeExecutor) Execute(ctx context.Context, req *Request) (*Result, error) {
 	start := time.Now()
 
-	prompt := buildUserContent(req)
+	// If a system prompt is provided, prepend it to the user content.
+	userContent := buildUserContent(req)
+	var prompt string
+	if req.SystemPrompt != "" {
+		prompt = req.SystemPrompt + "\n\n---\n\n" + userContent
+	} else {
+		prompt = userContent
+	}
 
 	entry := e.Config.Executors.ClaudeCode
 	cmdName := entry.Command
@@ -35,6 +42,11 @@ func (e *ClaudeCodeExecutor) Execute(ctx context.Context, req *Request) (*Result
 	args := entry.Args
 	if len(args) == 0 {
 		args = []string{"-p", "--output-format", "json", "--dangerously-skip-permissions"}
+	}
+
+	// Inject --model flag if a model is specified and not already in args.
+	if req.Step.Model != "" && !containsArg(args, "--model") {
+		args = append(args, "--model", req.Step.Model)
 	}
 
 	timeout, err := parseTimeout(entry.Timeout)
@@ -85,4 +97,14 @@ func parseTimeout(s string) (time.Duration, error) {
 		return 1800 * time.Second, nil
 	}
 	return time.ParseDuration(s)
+}
+
+// containsArg reports whether args contains the given flag string.
+func containsArg(args []string, flag string) bool {
+	for _, a := range args {
+		if a == flag {
+			return true
+		}
+	}
+	return false
 }

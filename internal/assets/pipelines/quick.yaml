@@ -10,13 +10,6 @@ steps:
 
   - name: Implement
     executor: claude-code
+    model: $implementer
+    prompt_template: implement
     input: [PLAN.md]
-
-  - name: Commit
-    executor: shell
-    command: "git add -A && git diff --cached --quiet || git commit -m 'feat: automated implementation via vcoding' && git push"
-
-  - name: PR
-    type: github-pr
-    title_from: TICKET.md
-    body_template: pr-summary

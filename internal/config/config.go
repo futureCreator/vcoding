@@ -28,10 +28,11 @@ type ProviderConfig struct {
 }
 
 type RolesConfig struct {
-	Planner  string `yaml:"planner"`
-	Reviewer string `yaml:"reviewer"`
-	Editor   string `yaml:"editor"`
-	Auditor  string `yaml:"auditor"`
+	Planner     string `yaml:"planner"`
+	Reviewer    string `yaml:"reviewer"`
+	Editor      string `yaml:"editor"`
+	Auditor     string `yaml:"auditor"`
+	Implementer string `yaml:"implementer"`
 }
 
 type GitHubConfig struct {
@@ -135,10 +136,11 @@ func defaults() *Config {
 			APITimeout: "300s",
 		},
 		Roles: RolesConfig{
-			Planner:  "anthropic/claude-opus-4-6",
-			Reviewer: "deepseek/deepseek-r1",
-			Editor:   "z-ai/glm-5",
-			Auditor:  "openai/gpt-5.2-codex",
+			Planner:     "anthropic/claude-opus-4-6",
+			Reviewer:    "deepseek/deepseek-r1",
+			Editor:      "z-ai/glm-5",
+			Auditor:     "openai/gpt-5.2-codex",
+			Implementer: "claude-sonnet-4-6",
 		},
 		GitHub: GitHubConfig{
 			BaseBranch: "main",
