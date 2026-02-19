@@ -40,9 +40,9 @@ provider:
 
 roles:
   planner: anthropic/claude-opus-4-6
-  reviewer: moonshotai/kimi-k2.5
-  editor: anthropic/claude-sonnet-4-6
-  auditor: openai/codex-5.3
+  reviewer: deepseek/deepseek-r1
+  editor: z-ai/glm-5
+  auditor: openai/gpt-5.2-codex
 
 github:
   base_branch: main

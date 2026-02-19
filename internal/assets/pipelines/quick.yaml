@@ -3,7 +3,7 @@ name: quick
 steps:
   - name: Plan
     executor: api
-    model: anthropic/claude-sonnet-4-6
+    model: $planner
     prompt_template: plan
     input: [TICKET.md]
     output: PLAN.md
@@ -11,6 +11,10 @@ steps:
   - name: Implement
     executor: claude-code
     input: [PLAN.md]
+
+  - name: Commit
+    executor: shell
+    command: "git add -A && git diff --cached --quiet || git commit -m 'feat: automated implementation via vcoding' && git push"
 
   - name: PR
     type: github-pr

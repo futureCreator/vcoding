@@ -58,3 +58,35 @@ func TestMergeFileNotExist(t *testing.T) {
 		t.Errorf("expected os.IsNotExist error, got %v", err)
 	}
 }
+
+func TestMergeFileRejectsGitHubToken(t *testing.T) {
+	dir := t.TempDir()
+
+	cases := []struct {
+		name    string
+		content string
+	}{
+		{
+			name:    "top-level github_token",
+			content: "github_token: ghp_abc123\ndefault_pipeline: default\n",
+		},
+		{
+			name:    "github.token nested field",
+			content: "github:\n  token: ghp_abc123\n  base_branch: main\n",
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			path := filepath.Join(dir, tc.name+".yaml")
+			if err := os.WriteFile(path, []byte(tc.content), 0644); err != nil {
+				t.Fatal(err)
+			}
+			cfg := defaults()
+			err := mergeFile(cfg, path)
+			if err == nil {
+				t.Error("expected error for deprecated token field, got nil")
+			}
+		})
+	}
+}

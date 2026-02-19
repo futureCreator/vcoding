@@ -3,6 +3,7 @@ package cli
 import (
 	"fmt"
 	"os/exec"
+	"strings"
 
 	"github.com/epmk/vcoding/internal/config"
 	"github.com/spf13/cobra"
@@ -40,8 +41,10 @@ func runDoctor(cmd *cobra.Command, args []string) error {
 	_, err = exec.LookPath("gh")
 	check("gh CLI installed", err == nil, "install gh: https://cli.github.com")
 	if err == nil {
+		ghVersionOK, ghVersionHint := checkGHVersion()
+		check("gh CLI version >= 2.0.0", ghVersionOK, ghVersionHint)
 		ghAuthErr := exec.Command("gh", "auth", "status").Run()
-		check("gh CLI authenticated", ghAuthErr == nil, "run `gh auth login`")
+		check("gh CLI authenticated", ghAuthErr == nil, "run `gh auth login` (or set GH_TOKEN in CI)")
 	}
 
 	// 3. claude CLI
@@ -66,4 +69,28 @@ func runDoctor(cmd *cobra.Command, args []string) error {
 		fmt.Println("Some checks failed. Fix the issues above before running vcoding.")
 	}
 	return nil
+}
+
+// checkGHVersion returns true if gh version >= 2.0.0.
+func checkGHVersion() (bool, string) {
+	out, err := exec.Command("gh", "--version").Output()
+	if err != nil {
+		return false, "could not determine gh version"
+	}
+	// Output format: "gh version 2.x.y (...)..."
+	line := strings.SplitN(string(out), "\n", 2)[0]
+	parts := strings.Fields(line)
+	// parts: ["gh", "version", "2.x.y", ...]
+	if len(parts) < 3 {
+		return false, fmt.Sprintf("unexpected gh --version output: %q", line)
+	}
+	ver := strings.TrimPrefix(parts[2], "v")
+	var major int
+	if _, err := fmt.Sscanf(ver, "%d.", &major); err != nil {
+		return false, fmt.Sprintf("could not parse gh version %q", ver)
+	}
+	if major < 2 {
+		return false, fmt.Sprintf("gh version %s is too old; upgrade from https://cli.github.com/", ver)
+	}
+	return true, ""
 }

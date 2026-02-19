@@ -22,8 +22,9 @@ type Config struct {
 }
 
 type ProviderConfig struct {
-	Endpoint  string `yaml:"endpoint"`
-	APIKeyEnv string `yaml:"api_key_env"`
+	Endpoint   string `yaml:"endpoint"`
+	APIKeyEnv  string `yaml:"api_key_env"`
+	APITimeout string `yaml:"api_timeout"`
 }
 
 type RolesConfig struct {
@@ -106,6 +107,22 @@ func mergeFile(dst *Config, path string) error {
 	if err != nil {
 		return err
 	}
+	// Check for deprecated github_token field before merging.
+	var raw map[string]interface{}
+	if err := yaml.Unmarshal(data, &raw); err == nil {
+		if gh, ok := raw["github"].(map[string]interface{}); ok {
+			if _, hasToken := gh["token"]; hasToken {
+				return fmt.Errorf("configuration field 'github.token' is no longer supported. " +
+					"Please remove it from %s and authenticate via `gh auth login` (or set GH_TOKEN in CI). " +
+					"See README for migration details.", path)
+			}
+		}
+		if _, hasToken := raw["github_token"]; hasToken {
+			return fmt.Errorf("configuration field 'github_token' is no longer supported. " +
+				"Please remove it from %s and authenticate via `gh auth login` (or set GH_TOKEN in CI). " +
+				"See README for migration details.", path)
+		}
+	}
 	return yaml.Unmarshal(data, dst)
 }
 
@@ -113,14 +130,15 @@ func defaults() *Config {
 	return &Config{
 		DefaultPipeline: "default",
 		Provider: ProviderConfig{
-			Endpoint:  "https://openrouter.ai/api/v1",
-			APIKeyEnv: "OPENROUTER_API_KEY",
+			Endpoint:   "https://openrouter.ai/api/v1",
+			APIKeyEnv:  "OPENROUTER_API_KEY",
+			APITimeout: "300s",
 		},
 		Roles: RolesConfig{
 			Planner:  "anthropic/claude-opus-4-6",
-			Reviewer: "moonshotai/kimi-k2.5",
-			Editor:   "anthropic/claude-sonnet-4-6",
-			Auditor:  "openai/codex-5.3",
+			Reviewer: "deepseek/deepseek-r1",
+			Editor:   "z-ai/glm-5",
+			Auditor:  "openai/gpt-5.2-codex",
 		},
 		GitHub: GitHubConfig{
 			BaseBranch: "main",
