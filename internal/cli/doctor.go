@@ -47,11 +47,7 @@ func runDoctor(cmd *cobra.Command, args []string) error {
 		check("gh CLI authenticated", ghAuthErr == nil, "run `gh auth login` (or set GH_TOKEN in CI)")
 	}
 
-	// 3. claude CLI
-	_, err = exec.LookPath("claude")
-	check("claude CLI installed", err == nil, "install claude: https://claude.ai/claude-code")
-
-	// 4. config
+	// 3. config
 	cfg, cfgErr := config.Load()
 	check("config loadable", cfgErr == nil, fmt.Sprintf("fix config: %v", cfgErr))
 	if cfgErr == nil {

@@ -124,13 +124,9 @@ func (d *Display) StepFailed(name, model string, err error) {
 }
 
 // Summary prints the final run summary.
-func (d *Display) Summary(totalCost float64, totalDuration time.Duration, prURL string) {
+func (d *Display) Summary(totalCost float64, totalDuration time.Duration) {
 	fmt.Fprintln(d.w, strings.Repeat("─", 76))
-	if prURL != "" {
-		fmt.Fprintf(d.w, "✅ Done  $%.4f  %.0fs  %s\n", totalCost, totalDuration.Seconds(), prURL)
-	} else {
-		fmt.Fprintf(d.w, "✅ Done  $%.4f  %.0fs\n", totalCost, totalDuration.Seconds())
-	}
+	fmt.Fprintf(d.w, "✅ Done  $%.4f  %.0fs\n", totalCost, totalDuration.Seconds())
 	fmt.Fprintln(d.w)
 }
 

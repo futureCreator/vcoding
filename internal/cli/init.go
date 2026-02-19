@@ -42,16 +42,9 @@ roles:
   planner: anthropic/claude-opus-4-6
   reviewer: deepseek/deepseek-r1
   editor: z-ai/glm-5
-  auditor: openai/gpt-5.2-codex
 
 github:
   base_branch: main
-
-executors:
-  claude-code:
-    command: claude
-    args: ["-p", "--output-format", "json"]
-    timeout: 300s
 
 language:
   artifacts: en

@@ -14,7 +14,6 @@ type Config struct {
 	Provider         ProviderConfig   `yaml:"provider"`
 	Roles            RolesConfig      `yaml:"roles"`
 	GitHub           GitHubConfig     `yaml:"github"`
-	Executors        ExecutorsConfig  `yaml:"executors"`
 	Language         LanguageConfig   `yaml:"language"`
 	ProjectContext   ProjectCtxConfig `yaml:"project_context"`
 	MaxContextTokens int              `yaml:"max_context_tokens"`
@@ -28,26 +27,14 @@ type ProviderConfig struct {
 }
 
 type RolesConfig struct {
-	Planner     string `yaml:"planner"`
-	Reviewer    string `yaml:"reviewer"`
-	Editor      string `yaml:"editor"`
-	Auditor     string `yaml:"auditor"`
-	Implementer string `yaml:"implementer"`
+	Planner  string `yaml:"planner"`
+	Reviewer string `yaml:"reviewer"`
+	Editor   string `yaml:"editor"`
 }
 
 type GitHubConfig struct {
 	DefaultRepo string `yaml:"default_repo"`
 	BaseBranch  string `yaml:"base_branch"`
-}
-
-type ExecutorEntry struct {
-	Command string   `yaml:"command"`
-	Args    []string `yaml:"args"`
-	Timeout string   `yaml:"timeout"`
-}
-
-type ExecutorsConfig struct {
-	ClaudeCode ExecutorEntry `yaml:"claude-code"`
 }
 
 type LanguageConfig struct {
@@ -136,24 +123,12 @@ func defaults() *Config {
 			APITimeout: "300s",
 		},
 		Roles: RolesConfig{
-			Planner:     "anthropic/claude-opus-4-6",
-			Reviewer:    "deepseek/deepseek-r1",
-			Editor:      "z-ai/glm-5",
-			Auditor:     "openai/gpt-5.2-codex",
-			Implementer: "claude-sonnet-4-6",
+			Planner:  "anthropic/claude-opus-4-6",
+			Reviewer: "deepseek/deepseek-r1",
+			Editor:   "z-ai/glm-5",
 		},
 		GitHub: GitHubConfig{
 			BaseBranch: "main",
-		},
-		Executors: ExecutorsConfig{
-			// WARNING: --dangerously-skip-permissions bypasses ALL permission checks.
-			// Only use in isolated CI environments with no sensitive data access.
-			// Override via ~/.vcoding/config.yaml or .vcoding/config.yaml for local dev.
-			ClaudeCode: ExecutorEntry{
-				Command: "claude",
-				Args:    []string{"-p", "--output-format", "json", "--dangerously-skip-permissions"},
-				Timeout: "300s",
-			},
 		},
 		Language: LanguageConfig{
 			Artifacts:       "en",

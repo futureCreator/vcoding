@@ -61,31 +61,3 @@ func TestAPIExecutorMock(t *testing.T) {
 	}
 }
 
-func TestShellExecutor(t *testing.T) {
-	dir := t.TempDir()
-	exec := &ShellExecutor{}
-	req := &Request{
-		Step:   types.Step{Name: "Test", Executor: "shell", Command: "echo hello"},
-		RunDir: dir,
-	}
-	result, err := exec.Execute(context.Background(), req)
-	if err != nil {
-		t.Fatalf("Execute() error: %v", err)
-	}
-	if result.Output != "hello\n" {
-		t.Errorf("expected 'hello\\n', got %q", result.Output)
-	}
-}
-
-func TestShellExecutorFailure(t *testing.T) {
-	dir := t.TempDir()
-	exec := &ShellExecutor{}
-	req := &Request{
-		Step:   types.Step{Name: "Test", Executor: "shell", Command: "exit 1"},
-		RunDir: dir,
-	}
-	_, err := exec.Execute(context.Background(), req)
-	if err == nil {
-		t.Error("expected error for non-zero exit code")
-	}
-}

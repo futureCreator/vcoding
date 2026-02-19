@@ -10,15 +10,13 @@ import (
 
 // Context manages file-based context between pipeline steps.
 type Context struct {
-	RunDir      string
-	ProjectCtx  string // pre-built project context markdown
-	GitDiff     string
-	GitDiffBase string
-	GitLog      string
+	RunDir     string
+	ProjectCtx string // pre-built project context markdown
+	GitDiff    string
 }
 
 // ResolveInput loads the content of each input spec.
-// Supports special inputs: "git:diff", "git:diff:base", "git:log", "project:context"
+// Supports special inputs: "git:diff", "project:context"
 // and regular filenames resolved from RunDir.
 func (c *Context) ResolveInput(inputs []string) (map[string]string, error) {
 	files := make(map[string]string)
@@ -27,10 +25,6 @@ func (c *Context) ResolveInput(inputs []string) (map[string]string, error) {
 		switch inp {
 		case "git:diff":
 			files["git:diff"] = c.GitDiff
-		case "git:diff:base":
-			files["git:diff:base"] = c.GitDiffBase
-		case "git:log":
-			files["git:log"] = c.GitLog
 		case "project:context":
 			files["project:context"] = c.ProjectCtx
 		default:

@@ -154,8 +154,7 @@ func (e *APIExecutor) ResolvePrompt(name string) (string, bool) {
 
 // diffKeys are virtual input keys that should be rendered as diff code blocks.
 var diffKeys = map[string]string{
-	"git:diff":      "git diff",
-	"git:diff:base": "git diff (base)",
+	"git:diff": "git diff",
 }
 
 func buildUserContent(req *Request) string {

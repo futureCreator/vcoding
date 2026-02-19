@@ -14,10 +14,12 @@ steps:
     prompt_template: plan
     input: [TICKET.md]
     output: PLAN.md
-  - name: Test
-    executor: shell
-    command: "go test ./..."
-    output: TEST.md
+  - name: Review
+    executor: api
+    model: openai/gpt-4o
+    prompt_template: review
+    input: [PLAN.md]
+    output: REVIEW.md
 `
 	p, err := Parse([]byte(yml))
 	if err != nil {
@@ -32,8 +34,8 @@ steps:
 	if p.Steps[0].Executor != "api" {
 		t.Errorf("expected executor 'api', got %q", p.Steps[0].Executor)
 	}
-	if p.Steps[1].Command != "go test ./..." {
-		t.Errorf("expected command 'go test ./...', got %q", p.Steps[1].Command)
+	if p.Steps[1].Model != "openai/gpt-4o" {
+		t.Errorf("expected model 'openai/gpt-4o', got %q", p.Steps[1].Model)
 	}
 }
 

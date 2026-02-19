@@ -8,7 +8,6 @@ import (
 	"github.com/epmk/vcoding/internal/assets"
 	"github.com/epmk/vcoding/internal/config"
 	"github.com/epmk/vcoding/internal/executor"
-	"github.com/epmk/vcoding/internal/github"
 	vlog "github.com/epmk/vcoding/internal/log"
 	"github.com/epmk/vcoding/internal/pipeline"
 	"github.com/epmk/vcoding/internal/project"
@@ -17,7 +16,7 @@ import (
 )
 
 // runPipeline is the shared entry point for pick and do commands.
-func runPipeline(ctx context.Context, src source.Source, pipelineName string, force bool, verbose bool) error {
+func runPipeline(ctx context.Context, src source.Source, pipelineName string, verbose bool) error {
 	// Load config
 	cfg, err := config.Load()
 	if err != nil {
@@ -32,16 +31,6 @@ func runPipeline(ctx context.Context, src source.Source, pipelineName string, fo
 	vlog.Init(cfg.LogLevel, logFile)
 	if logFile != nil {
 		defer logFile.Close()
-	}
-
-	// Check dirty working tree
-	if !force {
-		dirty, err := project.IsDirtyWorkingTree()
-		if err != nil {
-			vlog.Warn("could not check git status", "err", err)
-		} else if dirty {
-			return fmt.Errorf("working tree has uncommitted changes; commit or stash them first (or use --force)")
-		}
 	}
 
 	// Collect git info
@@ -69,13 +58,9 @@ func runPipeline(ctx context.Context, src source.Source, pipelineName string, fo
 		return fmt.Errorf("creating run: %w", err)
 	}
 
-	// Write TICKET.md or SPEC.md to run directory
+	// Write TICKET.md to run directory
 	ticketContent := pipeline.BuildTicketContent(input.Title, input.Body)
-	ticketFile := "TICKET.md"
-	if input.Mode == "do" {
-		ticketFile = "TICKET.md" // normalize spec to ticket too
-	}
-	if err := r.WriteFile(ticketFile, ticketContent); err != nil {
+	if err := r.WriteFile("TICKET.md", ticketContent); err != nil {
 		return fmt.Errorf("writing ticket: %w", err)
 	}
 
@@ -86,7 +71,7 @@ func runPipeline(ctx context.Context, src source.Source, pipelineName string, fo
 	}
 
 	// Build executors
-	executors := buildExecutors(cfg, prompts, input.Slug, input.Ref)
+	executors := buildExecutors(cfg, prompts)
 
 	// Collect project context
 	projectCtxStr := ""
@@ -98,20 +83,12 @@ func runPipeline(ctx context.Context, src source.Source, pipelineName string, fo
 
 	// Collect git diff
 	gitDiff, _ := project.Diff()
-	gitDiffBase, _ := project.DiffFromBase(cfg.GitHub.BaseBranch)
 
 	// Build pipeline context
 	pipelineCtx := &pipeline.Context{
-		RunDir:      r.Dir,
-		ProjectCtx:  projectCtxStr,
-		GitDiff:     gitDiff,
-		GitDiffBase: gitDiffBase,
-	}
-
-	// Create branch for this run
-	branchName := github.BranchName(input.Slug)
-	if err := github.CreateBranch(ctx, branchName, cfg.GitHub.BaseBranch); err != nil {
-		vlog.Warn("could not create git branch", "branch", branchName, "err", err)
+		RunDir:     r.Dir,
+		ProjectCtx: projectCtxStr,
+		GitDiff:    gitDiff,
 	}
 
 	// Run pipeline
@@ -144,26 +121,13 @@ func loadPipeline(cfg *config.Config, name string) (*pipeline.Pipeline, error) {
 	return pipeline.Parse(data)
 }
 
-func buildExecutors(cfg *config.Config, prompts map[string]string, slug, issueRef string) map[string]executor.Executor {
-	projectDir, _ := os.Getwd()
-	execs := map[string]executor.Executor{
+func buildExecutors(cfg *config.Config, prompts map[string]string) map[string]executor.Executor {
+	return map[string]executor.Executor{
 		"api": &executor.APIExecutor{
 			Config:  cfg,
 			Prompts: prompts,
 		},
-		"claude-code": &executor.ClaudeCodeExecutor{
-			Config: cfg,
-		},
-		"shell": &executor.ShellExecutor{
-			ProjectDir: projectDir,
-		},
-		"github-pr": &github.PRExecutor{
-			Config:   cfg,
-			Slug:     slug,
-			IssueRef: issueRef,
-		},
 	}
-	return execs
 }
 
 func openLogFile() *os.File {

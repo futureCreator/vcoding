@@ -21,9 +21,3 @@ steps:
     prompt_template: revise
     input: [PLAN.md, REVIEW.md]
     output: PLAN.md
-
-  - name: Implement
-    executor: claude-code
-    model: $implementer
-    prompt_template: implement
-    input: [PLAN.md]
