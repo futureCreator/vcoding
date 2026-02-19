@@ -40,8 +40,10 @@ type GitHubConfig struct {
 }
 
 type ExecutorEntry struct {
-	Command string `yaml:"command"`
-	Timeout string `yaml:"timeout"`
+	Command                    string `yaml:"command"`
+	Model                      string `yaml:"model"`
+	Timeout                    string `yaml:"timeout"`
+	DangerouslySkipPermissions *bool  `yaml:"dangerously_skip_permissions"`
 }
 
 type ExecutorsConfig struct {
@@ -143,12 +145,11 @@ func defaults() *Config {
 			BaseBranch: "main",
 		},
 		Executors: ExecutorsConfig{
-			// Args here are appended AFTER the required flags (-p, --output-format json,
-			// --dangerously-skip-permissions, --model, --system-prompt) that the executor
-			// always builds programmatically. Use this only for extra flags (e.g. --verbose).
 			ClaudeCode: ExecutorEntry{
-				Command: "claude",
-				Timeout: "300s",
+				Command:                    "claude",
+				Model:                      "claude-sonnet-4-6",
+				Timeout:                    "300s",
+				DangerouslySkipPermissions: boolPtr(true),
 			},
 		},
 		Language: LanguageConfig{
@@ -165,3 +166,5 @@ func defaults() *Config {
 		LogLevel:         "info",
 	}
 }
+
+func boolPtr(b bool) *bool { return &b }

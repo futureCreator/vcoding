@@ -50,7 +50,9 @@ github:
 executors:
   claude-code:
     command: claude
+    model: claude-sonnet-4-6
     timeout: 300s
+    dangerously_skip_permissions: true
 
 language:
   artifacts: en

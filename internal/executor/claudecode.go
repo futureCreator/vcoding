@@ -35,10 +35,19 @@ func (e *ClaudeCodeExecutor) Execute(ctx context.Context, req *Request) (*Result
 	}
 
 	// Always build args programmatically so model and system-prompt are never missing.
-	args := []string{"-p", "--output-format", "json", "--dangerously-skip-permissions"}
+	skipPerms := entry.DangerouslySkipPermissions == nil || *entry.DangerouslySkipPermissions
+	args := []string{"-p", "--output-format", "json"}
+	if skipPerms {
+		args = append(args, "--dangerously-skip-permissions")
+	}
 
-	if req.Step.Model != "" {
-		args = append(args, "--model", req.Step.Model)
+	// Step model takes precedence; fall back to executor-level model from config.
+	model := req.Step.Model
+	if model == "" {
+		model = entry.Model
+	}
+	if model != "" {
+		args = append(args, "--model", model)
 	}
 
 	if req.Step.PromptTemplate != "" && e.Prompts != nil {
