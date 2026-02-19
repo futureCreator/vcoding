@@ -71,7 +71,7 @@ func (e *ClaudeCodeExecutor) Execute(ctx context.Context, req *Request) (*Result
 
 func parseTimeout(s string) (time.Duration, error) {
 	if s == "" {
-		return 300 * time.Second, nil
+		return 1800 * time.Second, nil
 	}
 	return time.ParseDuration(s)
 }
