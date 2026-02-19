@@ -50,8 +50,10 @@ github:
 executors:
   claude-code:
     command: claude
-    args: ["-p", "--output-format", "json"]
     timeout: 300s
+    # args: extra flags only (e.g. ["--verbose"])
+    # Required flags (-p, --output-format json, --dangerously-skip-permissions,
+    # --model, --system-prompt) are always added automatically.
 
 language:
   artifacts: en
