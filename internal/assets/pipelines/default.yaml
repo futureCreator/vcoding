@@ -3,21 +3,21 @@ name: default
 steps:
   - name: Plan
     executor: api
-    model: anthropic/claude-opus-4-6
+    model: $planner
     prompt_template: plan
     input: [TICKET.md]
     output: PLAN.md
 
   - name: Review
     executor: api
-    model: moonshotai/kimi-k2.5
+    model: $reviewer
     prompt_template: review
     input: [PLAN.md]
     output: REVIEW.md
 
   - name: Revise
     executor: api
-    model: anthropic/claude-sonnet-4-6
+    model: $editor
     prompt_template: revise
     input: [PLAN.md, REVIEW.md]
     output: PLAN.md
@@ -33,7 +33,7 @@ steps:
 
   - name: Audit
     executor: api
-    model: openai/codex-5.3
+    model: $auditor
     prompt_template: code-review
     input: [PLAN.md, "git:diff"]
     output: REVIEW-CODE.md

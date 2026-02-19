@@ -89,7 +89,26 @@ func (e *Engine) Execute(ctx context.Context, pipelineCtx *Context) error {
 	return nil
 }
 
+// resolveModel replaces role placeholders ($planner, $reviewer, $editor, $auditor)
+// with the corresponding model ID from config. If the model string is not a
+// placeholder, it is returned unchanged.
+func (e *Engine) resolveModel(model string) string {
+	switch strings.ToLower(model) {
+	case "$planner":
+		return e.Config.Roles.Planner
+	case "$reviewer":
+		return e.Config.Roles.Reviewer
+	case "$editor":
+		return e.Config.Roles.Editor
+	case "$auditor":
+		return e.Config.Roles.Auditor
+	}
+	return model
+}
+
 func (e *Engine) runExecutorStep(ctx context.Context, step types.Step, pipelineCtx *Context) (detail string, cost float64, err error) {
+	step.Model = e.resolveModel(step.Model)
+
 	exec, ok := e.Executors[step.Executor]
 	if !ok {
 		return "", 0, fmt.Errorf("unknown executor %q", step.Executor)

@@ -3,7 +3,7 @@ name: quick
 steps:
   - name: Plan
     executor: api
-    model: anthropic/claude-sonnet-4-6
+    model: $planner
     prompt_template: plan
     input: [TICKET.md]
     output: PLAN.md
