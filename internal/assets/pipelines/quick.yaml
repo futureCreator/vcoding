@@ -14,7 +14,7 @@ steps:
 
   - name: Commit
     executor: shell
-    command: "git add -A && git commit -m 'feat: automated implementation via vcoding' && git push"
+    command: "git add -A && git diff --cached --quiet || git commit -m 'feat: automated implementation via vcoding' && git push"
 
   - name: PR
     type: github-pr
