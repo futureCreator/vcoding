@@ -81,7 +81,13 @@ func (e *APIExecutor) Execute(ctx context.Context, req *Request) (*Result, error
 
 	client := e.HTTPClient
 	if client == nil {
-		client = &http.Client{Timeout: 120 * time.Second}
+		timeout := 300 * time.Second
+		if e.Config.Provider.APITimeout != "" {
+			if d, err := time.ParseDuration(e.Config.Provider.APITimeout); err == nil {
+				timeout = d
+			}
+		}
+		client = &http.Client{Timeout: timeout}
 	}
 
 	resp, err := client.Do(httpReq)

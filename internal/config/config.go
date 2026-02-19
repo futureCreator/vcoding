@@ -22,8 +22,9 @@ type Config struct {
 }
 
 type ProviderConfig struct {
-	Endpoint  string `yaml:"endpoint"`
-	APIKeyEnv string `yaml:"api_key_env"`
+	Endpoint   string `yaml:"endpoint"`
+	APIKeyEnv  string `yaml:"api_key_env"`
+	APITimeout string `yaml:"api_timeout"`
 }
 
 type RolesConfig struct {
@@ -129,8 +130,9 @@ func defaults() *Config {
 	return &Config{
 		DefaultPipeline: "default",
 		Provider: ProviderConfig{
-			Endpoint:  "https://openrouter.ai/api/v1",
-			APIKeyEnv: "OPENROUTER_API_KEY",
+			Endpoint:   "https://openrouter.ai/api/v1",
+			APIKeyEnv:  "OPENROUTER_API_KEY",
+			APITimeout: "300s",
 		},
 		Roles: RolesConfig{
 			Planner:  "anthropic/claude-opus-4-6",
