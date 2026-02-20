@@ -8,8 +8,8 @@ import (
 // ExtractFilesFromPlan parses PLAN.md content and extracts file paths from
 // the "Files to Change" section.
 func ExtractFilesFromPlan(planContent string) ([]string, []string) {
-	// Find all ## headers for debugging
-	headerPattern := regexp.MustCompile(`(?m)^##\s*(.+)$`)
+	// Find all ## or ### headers for debugging
+	headerPattern := regexp.MustCompile(`(?m)^#{2,3}\s*(.+)$`)
 	matches := headerPattern.FindAllStringSubmatch(planContent, -1)
 	var allHeaders []string
 	for _, m := range matches {
@@ -18,8 +18,8 @@ func ExtractFilesFromPlan(planContent string) ([]string, []string) {
 		}
 	}
 
-	// Find the "Files to Change" section header (case-insensitive, flexible whitespace)
-	sectionPattern := regexp.MustCompile(`(?im)^##\s*Files\s+to\s+Change\s*$`)
+	// Find the "Files to Change" section header (case-insensitive, flexible whitespace, ## or ###)
+	sectionPattern := regexp.MustCompile(`(?im)^#{2,3}\s*Files\s+to\s+Change\s*$`)
 	loc := sectionPattern.FindStringIndex(planContent)
 	if loc == nil {
 		return nil, allHeaders
@@ -28,8 +28,8 @@ func ExtractFilesFromPlan(planContent string) ([]string, []string) {
 	// Get content after the header
 	section := planContent[loc[1]:]
 
-	// Find where the section ends (next ## or #### at start of line)
-	for _, marker := range []string{"\n## ", "\n####"} {
+	// Find where the section ends (next ##, ###, or #### at start of line)
+	for _, marker := range []string{"\n## ", "\n### ", "\n####"} {
 		if nextSection := strings.Index(section, marker); nextSection > 0 {
 			section = section[:nextSection]
 			break
