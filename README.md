@@ -2,6 +2,15 @@
 
 Multi-model planning pipeline CLI that orchestrates different AI models to generate reviewed implementation plans from issues or specs.
 
+## Philosophy
+
+With the surge of coding agent technologies, many solutions have become over-engineered. vCoding takes a different approach: **minimum process, maximum impact**.
+
+Key principles:
+- **Role specialization**: Planner creates plans, Reviewer reviews them, Editor updates them — each role handled by an optimized model
+- **File-based communication**: Markdown files transfer context between roles, minimizing context bloat
+- **Output as SKILL**: Final plans are delivered as SKILL files for direct consumption by coding agents like Claude Code and OpenCode
+
 ## Overview
 
 vCoding automates the planning workflow by delegating different tasks to specialized AI models:
