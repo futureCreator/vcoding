@@ -115,7 +115,7 @@ func FilterProjectContextByPlanFiles(planContent, projectCtx string) string {
 		return projectCtx
 	}
 
-	targetFiles := ExtractFilesFromPlan(planContent)
+	targetFiles, _ := ExtractFilesFromPlan(planContent)
 	if len(targetFiles) == 0 {
 		return projectCtx
 	}

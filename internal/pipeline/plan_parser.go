@@ -7,12 +7,22 @@ import (
 
 // ExtractFilesFromPlan parses PLAN.md content and extracts file paths from
 // the "Files to Change" section.
-func ExtractFilesFromPlan(planContent string) []string {
-	// Find the "Files to Change" section header
-	sectionPattern := regexp.MustCompile(`(?i)##\s*Files to Change\s*\n`)
+func ExtractFilesFromPlan(planContent string) ([]string, []string) {
+	// Find all ## headers for debugging
+	headerPattern := regexp.MustCompile(`(?m)^##\s*(.+)$`)
+	matches := headerPattern.FindAllStringSubmatch(planContent, -1)
+	var allHeaders []string
+	for _, m := range matches {
+		if len(m) > 1 {
+			allHeaders = append(allHeaders, strings.TrimSpace(m[1]))
+		}
+	}
+
+	// Find the "Files to Change" section header (case-insensitive, flexible whitespace)
+	sectionPattern := regexp.MustCompile(`(?im)^##\s*Files\s+to\s+Change\s*$`)
 	loc := sectionPattern.FindStringIndex(planContent)
 	if loc == nil {
-		return nil
+		return nil, allHeaders
 	}
 
 	// Get content after the header
@@ -67,7 +77,7 @@ func ExtractFilesFromPlan(planContent string) []string {
 		}
 	}
 
-	return files
+	return files, allHeaders
 }
 
 // isValidFilePath checks if the string looks like a file path

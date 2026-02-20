@@ -137,7 +137,7 @@ func (e *Engine) runExecutorStep(ctx context.Context, step types.Step, pipelineC
 				// Debug: Log token counts and save filtered context
 				originalTokens := EstimateTokens(projectCtx)
 				filteredTokens := EstimateTokens(filteredCtx)
-				targetFiles := ExtractFilesFromPlan(planContent)
+				targetFiles, planHeaders := ExtractFilesFromPlan(planContent)
 
 				// Extract first few lines of project context to see header format
 				var firstHeaders []string
@@ -145,7 +145,7 @@ func (e *Engine) runExecutorStep(ctx context.Context, step types.Step, pipelineC
 				for _, line := range lines {
 					if strings.HasPrefix(line, "### ") {
 						firstHeaders = append(firstHeaders, strings.TrimPrefix(line, "### "))
-						if len(firstHeaders) >= 3 {
+						if len(firstHeaders) >= 5 {
 							break
 						}
 					}
@@ -154,6 +154,7 @@ func (e *Engine) runExecutorStep(ctx context.Context, step types.Step, pipelineC
 				vlog.Info("Revise context filtering",
 					"files_in_plan", len(targetFiles),
 					"target_files", fmt.Sprintf("%v", targetFiles),
+					"plan_headers", fmt.Sprintf("%v", planHeaders),
 					"context_headers_sample", fmt.Sprintf("%v", firstHeaders),
 					"original_tokens", originalTokens,
 					"filtered_tokens", filteredTokens,
