@@ -84,13 +84,24 @@ func initConventionFiles() error {
 		_, statErr := os.Stat(name)
 		exists := statErr == nil
 
-		if err := os.WriteFile(name, []byte(content), 0644); err != nil {
-			return fmt.Errorf("writing %s: %w", name, err)
-		}
-
 		if exists {
-			fmt.Printf("Updated %s\n", name)
+			f, err := os.OpenFile(name, os.O_APPEND|os.O_WRONLY, 0644)
+			if err != nil {
+				return fmt.Errorf("opening %s: %w", name, err)
+			}
+			_, writeErr := fmt.Fprintf(f, "\n%s", content)
+			closeErr := f.Close()
+			if writeErr != nil {
+				return fmt.Errorf("appending to %s: %w", name, writeErr)
+			}
+			if closeErr != nil {
+				return fmt.Errorf("closing %s: %w", name, closeErr)
+			}
+			fmt.Printf("Appended to %s\n", name)
 		} else {
+			if err := os.WriteFile(name, []byte(content), 0644); err != nil {
+				return fmt.Errorf("writing %s: %w", name, err)
+			}
 			fmt.Printf("Created %s\n", name)
 		}
 	}
