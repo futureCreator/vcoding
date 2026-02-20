@@ -4,7 +4,7 @@ DIST_DIR=dist
 
 GO=$(shell which go)
 VERSION?=$(shell git describe --tags --always --dirty 2>/dev/null || echo "dev")
-LDFLAGS=-ldflags "-s -w -X main.Version=$(VERSION)"
+LDFLAGS=-ldflags "-s -w"
 
 .PHONY: all build build-all clean test help
 
