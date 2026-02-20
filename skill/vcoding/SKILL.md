@@ -14,6 +14,38 @@ metadata:
 
 Multi-model planning pipeline CLI that orchestrates AI models to generate reviewed implementation plans from GitHub issues or spec files.
 
+## Quick Start
+
+### 1. Install (if not already installed)
+
+```bash
+vcoding version
+# If "command not found":
+curl -fsSL https://raw.githubusercontent.com/futureCreator/vcoding/main/install.sh | bash
+# Restart shell or run: source ~/.bashrc (or ~/.zshrc)
+```
+
+### 2. Setup (first time only)
+
+```bash
+vcoding init                          # Create config
+export OPENROUTER_API_KEY="..."       # Get from https://openrouter.ai/keys
+gh auth login                         # If not already authenticated
+```
+
+### 3. Verify
+
+```bash
+vcoding doctor                        # Should print "All checks passed"
+```
+
+### 4. Use
+
+```bash
+vcoding pick 42                       # Plan from GitHub issue
+vcoding do SPEC.md                    # Plan from spec file
+```
+
 ## Overview
 
 vCoding automates the planning workflow by delegating different tasks to specialized AI models in a fixed 3-step pipeline:
@@ -28,18 +60,16 @@ All inter-model communication happens through markdown files (file-as-protocol).
 
 ## Prerequisites
 
-### Prerequisites Verification
+Run `vcoding doctor` to verify. If any check fails:
 
-Before using vCoding, verify all prerequisites:
-
-1. **vcoding CLI on PATH**: `vcoding version` returns successfully
-2. **git repository**: `git rev-parse --is-inside-work-tree` returns "true"
-3. **gh CLI (>= 2.0.0)**: `gh version | grep "gh version 2\."` matches
-4. **GitHub authentication**: `gh auth status` shows authenticated, or `GH_TOKEN` env var is set
-5. **OpenRouter API key**: `test -n "$OPENROUTER_API_KEY"` returns 0
-6. **Clean working directory** (recommended): `git status --porcelain` returns empty
-
-Run `vcoding doctor` for automated environment verification.
+| Check | Verify Command | If Failing |
+|-------|---------------|------------|
+| vcoding CLI | `vcoding version` | Run install command from metadata.install |
+| git repository | `git rev-parse --is-inside-work-tree` | Run `git init` or cd to git repo |
+| gh CLI >= 2.0 | `gh version` | Install from https://cli.github.com/ |
+| GitHub auth | `gh auth status` | Run `gh auth login` |
+| OpenRouter API key | `test -n "$OPENROUTER_API_KEY"` | Get key from https://openrouter.ai/keys |
+| Clean working dir | `git status --porcelain` | Commit or stash changes |
 
 ## Commands
 
@@ -47,79 +77,45 @@ Run `vcoding doctor` for automated environment verification.
 
 Initialize vCoding global configuration file.
 
-**Usage:**
-```
+```bash
 vcoding init [--minimal]
 ```
 
-**Flags:**
 - `--minimal` — Generate config without inline comments
-
-**Creates:**
-- `~/.vcoding/config.yaml` — Global configuration (with model roles, token limits, etc.)
-
-**Exit codes:** 0 = success, 1 = error
-
-**Example:**
-```bash
-vcoding init
-```
+- Creates: `~/.vcoding/config.yaml`
+- Exit: 0 = success, 1 = error
 
 ---
 
-### `vcoding pick`
+### `vcoding pick <issue-number>`
 
 Run pipeline on a GitHub issue.
 
-**Usage:**
-```
-vcoding pick <issue-number> [flags]
-```
-
-**Arguments:**
-- `issue-number` — GitHub issue number (required)
-
-**Flags:**
-- `-p, --pipeline string` — Pipeline to use (default: "default")
-- `-v, --verbose` — Show full model output
-
-**Exit codes:** 0 = success, 1 = error
-
-**Output:** `.vcoding/runs/<run-id>/PLAN.md` (symlinked from `.vcoding/runs/latest/`)
-
-**Example:**
 ```bash
 vcoding pick 42
 vcoding pick 42 --verbose
 ```
 
+- `-p, --pipeline string` — Pipeline to use (default: "default")
+- `-v, --verbose` — Show full model output
+- Exit: 0 = success, 1 = error
+- Output: `.vcoding/runs/latest/PLAN.md`
+
 ---
 
-### `vcoding do`
+### `vcoding do <spec-file>`
 
 Run pipeline on a local spec file.
 
-**Usage:**
-```
-vcoding do <spec-file> [flags]
-```
-
-**Arguments:**
-- `spec-file` — Path to spec/markdown file (required)
-
-**Flags:**
-- `-p, --pipeline string` — Pipeline to use (default: "default")
-- `-v, --verbose` — Show full model output
-
-**Exit codes:** 0 = success, 1 = error
-
-**Output:** `.vcoding/runs/<run-id>/PLAN.md` (symlinked from `.vcoding/runs/latest/`)
-
-**Example:**
 ```bash
 vcoding do SPEC.md
-vcoding do specs/feature-auth.md --verbose
+vcoding do specs/feature.md --verbose
 ```
+
+- `-p, --pipeline string` — Pipeline to use (default: "default")
+- `-v, --verbose` — Show full model output
+- Exit: 0 = success, 1 = error
+- Output: `.vcoding/runs/latest/PLAN.md`
 
 ---
 
@@ -127,17 +123,11 @@ vcoding do specs/feature-auth.md --verbose
 
 Show cost and run statistics.
 
-**Usage:**
-```
-vcoding stats
-```
-
-**Exit codes:** 0 = success, 1 = error
-
-**Example:**
 ```bash
 vcoding stats
 ```
+
+- Exit: 0 = success, 1 = error
 
 ---
 
@@ -145,17 +135,11 @@ vcoding stats
 
 Check prerequisites and configuration.
 
-**Usage:**
-```
-vcoding doctor
-```
-
-**Exit codes:** 0 = all checks passed, 1 = one or more checks failed
-
-**Example:**
 ```bash
 vcoding doctor
 ```
+
+- Exit: 0 = all checks passed, 1 = one or more checks failed
 
 ---
 
@@ -163,72 +147,45 @@ vcoding doctor
 
 Print version information.
 
-**Usage:**
-```
-vcoding version
-```
-
-**Exit codes:** 0 = success
-
-**Example:**
 ```bash
 vcoding version
 ```
 
+- Exit: 0 = success
+
 ## Workflow
 
-### Standard Workflow
+```
+# 1. Ensure vcoding is installed
+EXEC('vcoding version')
+IF exit_code != 0:
+   EXEC('curl -fsSL https://raw.githubusercontent.com/futureCreator/vcoding/main/install.sh | bash')
+   RESTART_SHELL_OR_SOURCE_PROFILE()
+   EXEC('vcoding version')  # Verify
+   IF still fails:
+     Report installation failure and halt
 
-1. **Ensure vcoding CLI is Installed**
-   ```
-   EXEC('vcoding version')
-   IF exit_code != 0:
-     EXEC('curl -fsSL https://raw.githubusercontent.com/futureCreator/vcoding/main/install.sh | bash')
-     EXEC('vcoding version')  # Verify installation
-     IF still fails:
-       Report installation failure and halt
-   ```
+# 2. Verify environment
+EXEC('vcoding doctor')
+IF exit_code != 0:
+   Read error output
+   Fix specific issue (see Prerequisites table)
+   Retry
 
-2. **Verify Environment**
-   ```
-   EXEC('vcoding doctor')
-   IF exit_code != 0:
-     Report environment issue and halt
-   ```
+# 3. Generate plan
+RUN 'vcoding pick <issue>' OR 'vcoding do <spec>'
 
-3. **Generate Plan**
-   ```
-   EXEC('vcoding pick <issue-number>')
-   -- OR --
-   EXEC('vcoding do <spec-file>')
-   ```
+# 4. Read plan
+PLAN = READ('.vcoding/runs/latest/PLAN.md')
 
-4. **Read Generated Plan**
-   ```
-   PLAN = READ('.vcoding/runs/latest/PLAN.md')
-   IF PLAN is missing:
-     Check stderr output from previous command
-     Report plan generation failure
-   ```
+# 5. Implement
+Follow PLAN.md steps
 
-5. **Implement According to Plan**
-   - Follow steps in PLAN.md
-   - Write code changes
-   - Run tests to verify
-
-6. **Handle Implementation Failures**
-   ```
-   IF tests fail:
-     REVIEW = READ('.vcoding/runs/latest/REVIEW.md')
-     Analyze review insights
-     Option A: Fix issues manually based on review
-     Option B: Re-run with modified spec: EXEC('vcoding do <updated-spec>')
-   ```
-
-7. **Report Cost (Optional)**
-   ```
-   EXEC('vcoding stats')
-   ```
+# 6. Handle failures
+IF tests fail:
+   READ '.vcoding/runs/latest/REVIEW.md' for insights
+   Fix manually OR re-run with updated spec
+```
 
 ### Failure Recovery Scenarios
 
@@ -247,11 +204,7 @@ vcoding version
 
 ## Output Files
 
-vCoding uses a file-as-protocol contract. All outputs are written to the run directory.
-
-### Run Directory
-
-Each invocation creates `.vcoding/runs/<run-id>/` with:
+Each run creates `.vcoding/runs/<run-id>/`:
 
 | File | Description |
 |------|-------------|
@@ -260,22 +213,9 @@ Each invocation creates `.vcoding/runs/<run-id>/` with:
 | `REVIEW.md` | Review output (default pipeline only) |
 | `meta.json` | Run metadata (status, cost, tokens, timestamps) |
 
-### Latest Symlink
+`.vcoding/runs/latest/` is a symlink to the most recent run.
 
-`.vcoding/runs/latest/` always points to the most recent run directory. Use this to read outputs without knowing the run ID:
-
-```
-.vcoding/runs/latest/PLAN.md    # Latest plan
-.vcoding/runs/latest/REVIEW.md  # Latest review
-.vcoding/runs/latest/meta.json  # Latest run metadata
-```
-
-### File Formats
-
-- `PLAN.md`, `REVIEW.md`, `TICKET.md` — Markdown
-- `meta.json` — JSON with fields: `started_at`, `input_mode`, `input_ref`, `status`, `steps`, `total_cost`, `git_branch`, `git_commit`
-
-### `meta.json` Schema
+### meta.json Schema
 
 ```json
 {
@@ -283,16 +223,7 @@ Each invocation creates `.vcoding/runs/<run-id>/` with:
   "input_mode": "pick",
   "input_ref": "42",
   "status": "completed",
-  "steps": [
-    {
-      "name": "Plan",
-      "status": "completed",
-      "cost": 0.012,
-      "tokens_in": 1500,
-      "tokens_out": 800,
-      "duration_ms": 4200
-    }
-  ],
+  "steps": [...],
   "total_cost": 0.035,
   "git_branch": "main",
   "git_commit": "abc1234"
@@ -301,67 +232,24 @@ Each invocation creates `.vcoding/runs/<run-id>/` with:
 
 ## Error Handling
 
-### Exit Codes
-
-| Code | Meaning |
-|------|---------|
+| Exit Code | Meaning |
+|-----------|---------|
 | 0 | Success |
-| 1 | Error (config invalid, API error, file not found, usage error, etc.) |
+| 1 | Error (config invalid, API error, file not found, etc.) |
 
-### Common Failure Modes
+### Common Issues
 
-| Symptom | Likely Cause | Resolution |
-|---------|-------------|------------|
-| `vcoding pick` exits 1 with "gh: command not found" | gh CLI not installed | Install gh CLI |
-| `vcoding pick` exits 1 with "invalid config" | Missing or malformed config.yaml | Run `vcoding init` and set API key |
-| `vcoding do` exits 0 but PLAN.md is empty | Model returned empty response | Check API key validity; retry |
-| `vcoding doctor` reports OPENROUTER_API_KEY missing | Environment variable not set | `export OPENROUTER_API_KEY=...` |
-| Pipeline times out | Network or API latency | Implement agent-side 5-minute timeout with retry |
+| Symptom | Cause | Fix |
+|---------|-------|-----|
+| `vcoding: command not found` | Not installed | Run install command |
+| `gh: command not found` | gh CLI missing | Install gh CLI |
+| `invalid config` | Missing config | Run `vcoding init` |
+| `OPENROUTER_API_KEY missing` | Env var not set | `export OPENROUTER_API_KEY=...` |
+| `gh auth` error | Not authenticated | Run `gh auth login` |
+| Empty PLAN.md | API error | Check API key; retry |
 
-## Examples
+## Security
 
-### Example 1: Plan from GitHub Issue
-
-```bash
-# Verify environment
-vcoding doctor
-# Output: "All checks passed" or list of issues
-
-# Generate plan from issue
-vcoding pick 42
-# Creates: .vcoding/runs/<run-id>/
-# Updates: .vcoding/runs/latest -> <run-id>
-
-# Read the plan
-# PLAN = READ('.vcoding/runs/latest/PLAN.md')
-
-# Implement according to plan steps
-# ... agent makes code changes ...
-
-# Check cost
-vcoding stats
-```
-
-### Example 2: Plan from Spec File
-
-```bash
-# Create spec file
-# WRITE('spec.md', 'Add user authentication with OAuth2')
-
-# Generate plan
-vcoding do spec.md
-
-# Read and implement
-# PLAN = READ('.vcoding/runs/latest/PLAN.md')
-# ... implementation ...
-```
-
-### Example 3: Verbose Output for Debugging
-
-```bash
-# Use verbose mode to see full model output
-vcoding pick 15 --verbose
-
-# Read the plan
-# PLAN = READ('.vcoding/runs/latest/PLAN.md')
-```
+- Never log or expose `OPENROUTER_API_KEY`
+- `GH_TOKEN` must have appropriate repo scope
+- Generated files use `0644` permissions
