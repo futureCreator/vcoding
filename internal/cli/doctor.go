@@ -5,7 +5,7 @@ import (
 	"os/exec"
 	"strings"
 
-	"github.com/epmk/vcoding/internal/config"
+	"github.com/futureCreator/vcoding/internal/config"
 	"github.com/spf13/cobra"
 )
 

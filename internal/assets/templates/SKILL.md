@@ -1,16 +1,14 @@
 ---
 name: "vcoding"
-version: "{{.Version}}"
-description: "Multi-model planning pipeline that generates reviewed implementation plans from GitHub issues or spec files"
-author: "futureCreator"
-repository: "https://github.com/futureCreator/vcoding"
-requires:
-  - "vcoding CLI on PATH"
-  - "git (inside a git repository)"
-  - "gh CLI >= 2.0.0 (authenticated, or GH_TOKEN set)"
-  - "OPENROUTER_API_KEY environment variable"
-tags: ["planning", "code-generation", "multi-model", "cli", "file-protocol"]
-protocol: "file"
+description: "Multi-model planning pipeline that generates reviewed implementation plans from GitHub issues or spec files. Use when you need to create implementation plans from GitHub issues or specification files, or when the user mentions planning, code planning, or implementation planning."
+license: "MIT"
+compatibility: "Requires vcoding CLI, git, gh CLI >= 2.0.0 (authenticated), and OPENROUTER_API_KEY environment variable"
+metadata:
+  author: "futureCreator"
+  version: "{{.Version}}"
+  repository: "https://github.com/futureCreator/vcoding"
+  install: "curl -fsSL https://raw.githubusercontent.com/futureCreator/vcoding/main/install.sh | bash"
+allowed-tools: "Bash(vcoding:*) Bash(git:*) Bash(gh:*) Read Write"
 ---
 
 # vcoding AgentSkill

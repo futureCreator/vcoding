@@ -5,8 +5,8 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/epmk/vcoding/internal/assets"
-	"github.com/epmk/vcoding/pkg/version"
+	"github.com/futureCreator/vcoding/internal/assets"
+	"github.com/futureCreator/vcoding/pkg/version"
 	"github.com/spf13/cobra"
 )
 

@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/epmk/vcoding/internal/types"
+	"github.com/futureCreator/vcoding/internal/types"
 	"gopkg.in/yaml.v3"
 )
 

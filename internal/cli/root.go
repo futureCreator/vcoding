@@ -3,7 +3,7 @@ package cli
 import (
 	"fmt"
 
-	"github.com/epmk/vcoding/pkg/version"
+	"github.com/futureCreator/vcoding/pkg/version"
 	"github.com/spf13/cobra"
 )
 

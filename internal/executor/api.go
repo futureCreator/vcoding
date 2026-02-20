@@ -11,9 +11,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/epmk/vcoding/internal/config"
-	"github.com/epmk/vcoding/internal/cost"
-	vlog "github.com/epmk/vcoding/internal/log"
+	"github.com/futureCreator/vcoding/internal/config"
+	"github.com/futureCreator/vcoding/internal/cost"
+	vlog "github.com/futureCreator/vcoding/internal/log"
 )
 
 // APIExecutor calls the OpenRouter API (OpenAI-compatible).

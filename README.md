@@ -7,8 +7,8 @@ Multi-model planning pipeline CLI that orchestrates different AI models to gener
 vCoding automates the planning workflow by delegating different tasks to specialized AI models:
 
 - **Planner** (Claude Opus): Creates detailed implementation plans from issues/specs
-- **Reviewer** (Kimi): Reviews plans for completeness and correctness
-- **Editor** (Claude Sonnet): Revises plans based on review feedback
+- **Reviewer** (DeepSeek R1): Reviews plans for completeness and correctness
+- **Editor** (GLM-5): Revises plans based on review feedback
 
 The final output is a reviewed `PLAN.md` file ready for implementation.
 
@@ -54,11 +54,9 @@ vcoding init
 
 This creates:
 - `~/.vcoding/config.yaml` - Global configuration with default settings
-- `CLAUDE.md` - Instructions for Claude Code to autonomously run vcoding
-- `AGENTS.md` - Instructions for other AI agents (Cursor, etc.)
 - `SKILL.md` - ClawHub-compatible AgentSkill definition for vcoding
 
-These instruction files enable AI agents to understand and run vcoding pipelines autonomously without manual shell execution.
+The `SKILL.md` file enables AI agents to understand and run vcoding pipelines autonomously without manual shell execution.
 
 ### 2. Set up your OpenRouter API key
 
@@ -97,6 +95,7 @@ The output will be a reviewed `PLAN.md` file in `.vcoding/runs/latest/`.
 | `vcoding do <spec-file>` | Run pipeline on a local spec file |
 | `vcoding stats` | Show cost and run statistics |
 | `vcoding doctor` | Check prerequisites and configuration |
+| `vcoding migrate-config` | Remove deprecated GitHub token fields from config files |
 | `vcoding version` | Print version information |
 
 ### Command Options
@@ -105,14 +104,14 @@ The output will be a reviewed `PLAN.md` file in `.vcoding/runs/latest/`.
 ```bash
 vcoding pick <issue-number> [flags]
   -p, --pipeline string   Pipeline to use (default "default")
-      --force             Skip dirty working tree check
+  -v, --verbose           Stream executor output to terminal
 ```
 
 **do** - Run pipeline on spec file
 ```bash
 vcoding do <spec-file> [flags]
   -p, --pipeline string   Pipeline to use (default "default")
-      --force             Skip dirty working tree check
+  -v, --verbose           Stream executor output to terminal
 ```
 
 ## Configuration
@@ -131,8 +130,8 @@ provider:
 
 roles:
   planner: anthropic/claude-opus-4-6
-  reviewer: moonshotai/kimi-k2.5
-  editor: anthropic/claude-sonnet-4-6
+  reviewer: deepseek/deepseek-r1
+  editor: z-ai/glm-5
 
 github:
   default_repo: owner/repo
@@ -163,21 +162,19 @@ log_level: info
 
 ## Pipelines
 
-Pipelines define the sequence of steps executed during a run. Two built-in pipelines are included:
+Pipelines define the sequence of steps executed during a run.
 
 ### default
-The standard planning workflow with review cycle:
-1. **Plan** - Create implementation plan
+The built-in planning workflow with review cycle:
+1. **Plan** - Create implementation plan from ticket and project context
 2. **Review** - Review the plan
 3. **Revise** - Revise based on review
 
-### quick
-A streamlined workflow for faster turnaround:
-1. **Plan** - Create implementation plan
+Models are referenced by role (`$planner`, `$reviewer`, `$editor`) and resolved from config at runtime.
 
 ### Custom pipelines
 
-You can create custom pipeline YAML files in `~/.vcoding/pipelines/`:
+You can create custom pipeline YAML files in `~/.vcoding/pipelines/` or `.vcoding/pipelines/`:
 
 ```yaml
 name: custom
@@ -185,23 +182,23 @@ name: custom
 steps:
   - name: Plan
     executor: api
-    model: anthropic/claude-sonnet-4-6
+    model: $planner
     prompt_template: plan
-    input: [TICKET.md]
+    input: [TICKET.md, project:context]
     output: PLAN.md
 
   - name: Review
     executor: api
-    model: anthropic/claude-opus-4-6
+    model: $reviewer
     prompt_template: review
-    input: [TICKET.md, PLAN.md]
+    input: [PLAN.md]
     output: REVIEW.md
 
   - name: Revise
     executor: api
-    model: anthropic/claude-sonnet-4-6
+    model: $editor
     prompt_template: revise
-    input: [TICKET.md, PLAN.md, REVIEW.md]
+    input: [PLAN.md, REVIEW.md]
     output: PLAN.md
 ```
 
@@ -225,9 +222,7 @@ steps:
     ├── latest -> 20240219120000-feature-x/  # symlink to most recent run
     └── ...
 
-# Agent instruction files (created by vcoding init)
-CLAUDE.md                # Claude Code instructions
-AGENTS.md                # Generic AI agent instructions
+# Agent instruction file (created by vcoding init)
 SKILL.md                 # ClawHub-compatible AgentSkill definition
 ```
 
@@ -259,17 +254,11 @@ vcoding stats
 
 ## AI Agent Integration
 
-After running `vcoding init`, the generated instruction files enable AI agents to autonomously execute vcoding pipelines:
-
-- **Claude Code** (`CLAUDE.md`) - Automatically understands how to run `vcoding pick` or `vcoding do` based on the task
-- **Other agents** (`AGENTS.md`) - Generic instructions for any AI coding assistant
-- **AgentSkill** (`SKILL.md`) - ClawHub-compatible skill definition for publishing and distributing the vcoding skill
-
-This allows you to simply describe what you want to the AI agent, and it will handle the vcoding workflow automatically without you manually running shell commands.
+After running `vcoding init`, the generated `SKILL.md` file enables AI agents to autonomously execute vcoding pipelines. It follows the ClawHub AgentSkill format, allowing agents to discover and run `vcoding pick` or `vcoding do` without manual shell execution.
 
 ### ClawHub Publishing
 
-`SKILL.md` follows the ClawHub AgentSkill format and can be published to the ClawHub skill registry. To publish:
+`SKILL.md` can be published to the ClawHub skill registry:
 
 1. Ensure `SKILL.md` is committed to your repository
 2. Submit the repository URL to the ClawHub registry

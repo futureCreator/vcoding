@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/epmk/vcoding/internal/assets"
+	"github.com/futureCreator/vcoding/internal/assets"
 	"gopkg.in/yaml.v3"
 )
 

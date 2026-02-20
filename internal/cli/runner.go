@@ -5,14 +5,14 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/epmk/vcoding/internal/assets"
-	"github.com/epmk/vcoding/internal/config"
-	"github.com/epmk/vcoding/internal/executor"
-	vlog "github.com/epmk/vcoding/internal/log"
-	"github.com/epmk/vcoding/internal/pipeline"
-	"github.com/epmk/vcoding/internal/project"
-	"github.com/epmk/vcoding/internal/run"
-	"github.com/epmk/vcoding/internal/source"
+	"github.com/futureCreator/vcoding/internal/assets"
+	"github.com/futureCreator/vcoding/internal/config"
+	"github.com/futureCreator/vcoding/internal/executor"
+	vlog "github.com/futureCreator/vcoding/internal/log"
+	"github.com/futureCreator/vcoding/internal/pipeline"
+	"github.com/futureCreator/vcoding/internal/project"
+	"github.com/futureCreator/vcoding/internal/run"
+	"github.com/futureCreator/vcoding/internal/source"
 )
 
 // runPipeline is the shared entry point for pick and do commands.

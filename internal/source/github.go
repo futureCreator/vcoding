@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/epmk/vcoding/internal/github"
+	"github.com/futureCreator/vcoding/internal/github"
 )
 
 // GitHubSource fetches a GitHub issue via the gh CLI.

@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/epmk/vcoding/internal/config"
+	"github.com/futureCreator/vcoding/internal/config"
 )
 
 // FileEntry represents a collected project file.
