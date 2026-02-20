@@ -1,16 +1,16 @@
 # vCoding
 
-Multi-model issue-to-PR pipeline CLI that orchestrates different AI models to take an issue or spec from input to pull request automatically.
+Multi-model planning pipeline CLI that orchestrates different AI models to generate reviewed implementation plans from issues or specs.
 
 ## Overview
 
-vCoding automates the software development workflow by delegating different tasks to specialized AI models:
+vCoding automates the planning workflow by delegating different tasks to specialized AI models:
 
 - **Planner** (Claude Opus): Creates detailed implementation plans from issues/specs
 - **Reviewer** (Kimi): Reviews plans for completeness and correctness
 - **Editor** (Claude Sonnet): Revises plans based on review feedback
-- **Auditor** (Codex): Reviews code changes after implementation
-- **Claude Code**: Handles actual code implementation
+
+The final output is a reviewed `PLAN.md` file ready for implementation.
 
 ## Features
 
@@ -19,7 +19,6 @@ vCoding automates the software development workflow by delegating different task
 - **Pipeline-based**: Configurable YAML pipelines define the workflow
 - **Run isolation**: Each execution gets its own timestamped directory with immutable snapshots
 - **Cost tracking**: Monitors API usage and costs across runs
-- **GitHub integration**: Automatically creates pull requests
 - **No loops**: Fixed linear sequence for predictable cost and time
 
 ## Installation
@@ -27,8 +26,7 @@ vCoding automates the software development workflow by delegating different task
 ### Prerequisites
 
 - Go 1.22+
-- `gh` CLI (GitHub CLI) - for PR creation and issue fetching
-- `claude` CLI (Claude Code) - for implementation
+- `gh` CLI (GitHub CLI) - for issue fetching (optional)
 - OpenRouter API key - for accessing AI models
 
 ### Build from source
@@ -81,6 +79,8 @@ vcoding pick 123
 vcoding do specs/feature-xyz.md
 ```
 
+The output will be a reviewed `PLAN.md` file in `.vcoding/runs/<run-id>/`.
+
 ## Commands
 
 | Command | Description |
@@ -128,17 +128,10 @@ roles:
   planner: anthropic/claude-opus-4-6
   reviewer: moonshotai/kimi-k2.5
   editor: anthropic/claude-sonnet-4-6
-  auditor: openai/codex-5.3
 
 github:
   default_repo: owner/repo
   base_branch: main
-
-executors:
-  claude-code:
-    command: claude
-    args: ["-p", "--output-format", "json"]
-    timeout: 300s
 
 language:
   artifacts: en
@@ -168,21 +161,14 @@ log_level: info
 Pipelines define the sequence of steps executed during a run. Two built-in pipelines are included:
 
 ### default
-The full workflow with review and audit cycles:
+The standard planning workflow with review cycle:
 1. **Plan** - Create implementation plan
 2. **Review** - Review the plan
 3. **Revise** - Revise based on review
-4. **Implement** - Claude Code implements the plan
-5. **Test** - Run tests
-6. **Audit** - Review code changes
-7. **Fix** - Apply fixes from audit
-8. **PR** - Create pull request
 
 ### quick
 A streamlined workflow for faster turnaround:
 1. **Plan** - Create implementation plan
-2. **Implement** - Claude Code implements the plan
-3. **PR** - Create pull request
 
 ### Custom pipelines
 
@@ -199,22 +185,25 @@ steps:
     input: [TICKET.md]
     output: PLAN.md
 
-  - name: Implement
-    executor: claude-code
-    input: [PLAN.md]
+  - name: Review
+    executor: api
+    model: anthropic/claude-opus-4-6
+    prompt_template: review
+    input: [TICKET.md, PLAN.md]
+    output: REVIEW.md
 
-  - name: PR
-    type: github-pr
-    title_from: TICKET.md
-    body_template: pr-summary
+  - name: Revise
+    executor: api
+    model: anthropic/claude-sonnet-4-6
+    prompt_template: revise
+    input: [TICKET.md, PLAN.md, REVIEW.md]
+    output: PLAN.md
 ```
 
 ### Executors
 
 - **api** - Call AI models via OpenRouter API
-- **claude-code** - Execute Claude Code CLI for implementation
 - **shell** - Run shell commands
-- **github-pr** - Create GitHub pull requests
 
 ## Project Structure
 
@@ -226,10 +215,8 @@ steps:
     ├── 20240219120000-feature-x/
     │   ├── meta.json       # Run metadata
     │   ├── TICKET.md       # Input issue/spec
-    │   ├── PLAN.md         # Generated plan
-    │   ├── REVIEW.md       # Review output
-    │   ├── TEST.md         # Test results
-    │   └── REVIEW-CODE.md  # Code audit
+    │   ├── PLAN.md         # Generated plan (final output)
+    │   └── REVIEW.md       # Review output
     └── ...
 ```
 
@@ -238,21 +225,18 @@ steps:
 | Variable | Description |
 |----------|-------------|
 | `OPENROUTER_API_KEY` | Required for API executor |
-| `GH_TOKEN` | GitHub token for CI environments (bypasses `gh auth login`) |
+| `GH_TOKEN` | GitHub token for fetching issues via `gh` CLI |
 | `GITHUB_TOKEN` | Alternative to `GH_TOKEN`; `GH_TOKEN` takes precedence |
 
 ## CI Usage
 
-In CI environments, authenticate with GitHub by setting `GH_TOKEN` instead of running `gh auth login`:
+In CI environments, set `GH_TOKEN` instead of running `gh auth login`:
 
 ```yaml
-# GitHub Actions — gh is pre-installed on ubuntu-latest/macos-latest/windows-latest
 env:
   GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
 ```
-
-For other CI systems (GitLab CI, CircleCI, etc.), install the `gh` CLI and set `GH_TOKEN` in the job environment. In Docker/container environments, set `GH_TOKEN` via environment variable rather than mounting credential files.
 
 ## Cost Tracking
 
@@ -286,15 +270,13 @@ go build ./cmd/vcoding
 
 3. **No Loops**: The pipeline is a fixed linear sequence for predictable cost and time.
 
-4. **Executor Abstraction**: vCoding orchestrates but does not implement agentic coding loops. Claude Code handles implementation.
-
-5. **Run Isolation**: Each pipeline execution gets its own timestamped directory with immutable snapshots.
+4. **Run Isolation**: Each pipeline execution gets its own timestamped directory with immutable snapshots.
 
 ### Key Components
 
 - **Pipeline** - YAML-defined workflow with steps
 - **Engine** - Step orchestrator that executes pipelines
-- **Executor** - Interface for different execution types (API, Claude Code, shell)
+- **Executor** - Interface for different execution types (API, shell)
 - **Source** - Input abstraction (GitHub issues, spec files)
 - **Context** - File-based context management between steps
 
