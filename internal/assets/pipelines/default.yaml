@@ -5,7 +5,7 @@ steps:
     executor: api
     model: $planner
     prompt_template: plan
-    input: [TICKET.md]
+    input: [TICKET.md, project:context]
     output: PLAN.md
 
   - name: Review

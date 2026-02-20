@@ -60,11 +60,12 @@ func (e *Engine) Execute(ctx context.Context, pipelineCtx *Context) error {
 		var stepErr error
 		var detail string
 		var cost float64
+		var artifactContent string
 
 		if step.Executor == "" {
 			stepErr = fmt.Errorf("step %q has no executor", step.Name)
 		} else {
-			detail, cost, stepErr = e.runExecutorStep(ctx, step, pipelineCtx)
+			detail, artifactContent, cost, stepErr = e.runExecutorStep(ctx, step, pipelineCtx)
 		}
 
 		duration := time.Since(stepStart)
@@ -88,7 +89,7 @@ func (e *Engine) Execute(ctx context.Context, pipelineCtx *Context) error {
 			vlog.Warn("failed to save step result", "step", step.Name, "err", err)
 		}
 
-		e.Display.StepDone(step.Name, displayModel, detail, cost, duration)
+		e.Display.StepDone(step.Name, displayModel, detail, cost, duration, artifactContent)
 	}
 
 	if err := e.Run.Complete(); err != nil {
@@ -114,17 +115,17 @@ func (e *Engine) resolveModel(model string) string {
 	return model
 }
 
-func (e *Engine) runExecutorStep(ctx context.Context, step types.Step, pipelineCtx *Context) (detail string, cost float64, err error) {
+func (e *Engine) runExecutorStep(ctx context.Context, step types.Step, pipelineCtx *Context) (detail, artifactContent string, cost float64, err error) {
 	step.Model = e.resolveModel(step.Model)
 
 	exec, ok := e.Executors[step.Executor]
 	if !ok {
-		return "", 0, fmt.Errorf("unknown executor %q", step.Executor)
+		return "", "", 0, fmt.Errorf("unknown executor %q", step.Executor)
 	}
 
 	inputFiles, err := pipelineCtx.ResolveInput(step.Input)
 	if err != nil {
-		return "", 0, err
+		return "", "", 0, err
 	}
 
 	// Apply token budget truncation for API steps.
@@ -137,12 +138,11 @@ func (e *Engine) runExecutorStep(ctx context.Context, step types.Step, pipelineC
 		Step:       step,
 		RunDir:     e.Run.Dir,
 		InputFiles: inputFiles,
-		Verbose:    e.Verbose,
 	}
 
 	result, err := exec.Execute(ctx, req)
 	if err != nil {
-		return "", 0, err
+		return "", "", 0, err
 	}
 
 	// Save output file to run directory
@@ -151,11 +151,12 @@ func (e *Engine) runExecutorStep(ctx context.Context, step types.Step, pipelineC
 			vlog.Warn("failed to write output file", "file", step.Output, "err", writeErr)
 		}
 		detail = step.Output
+		artifactContent = result.Output
 	} else if step.Output == "" {
 		detail = fmt.Sprintf("%.0fs", result.Duration.Seconds())
 	}
 
-	return detail, result.Cost, nil
+	return detail, artifactContent, result.Cost, nil
 }
 
 // resolvePromptForBudget returns the system prompt text for token budget accounting.

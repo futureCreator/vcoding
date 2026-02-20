@@ -1,6 +1,5 @@
 vcoding
-.vcoding/runs/
-.vcoding/vcoding.log
+.vcoding
 *.test
 
 CLAUDE.md

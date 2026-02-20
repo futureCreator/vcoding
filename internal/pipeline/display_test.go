@@ -3,6 +3,7 @@ package pipeline
 import (
 	"bytes"
 	"errors"
+	"fmt"
 	"strings"
 	"testing"
 	"time"
@@ -28,7 +29,7 @@ func TestStepStart_ContainsModel(t *testing.T) {
 func TestStepDone_ContainsModel(t *testing.T) {
 	var buf bytes.Buffer
 	d := newTestDisplay(&buf)
-	d.StepDone("review", "openai/gpt-4o", "REVIEW.md", 0.0012, 3*time.Second)
+	d.StepDone("review", "openai/gpt-4o", "REVIEW.md", 0.0012, 3*time.Second, "")
 	out := buf.String()
 	if !strings.Contains(out, "openai/gpt-4o") {
 		t.Errorf("StepDone output missing model: %q", out)
@@ -41,10 +42,44 @@ func TestStepDone_ContainsModel(t *testing.T) {
 func TestStepDone_ZeroCostShowsDash(t *testing.T) {
 	var buf bytes.Buffer
 	d := newTestDisplay(&buf)
-	d.StepDone("build", "api", "", 0, time.Second)
+	d.StepDone("build", "api", "", 0, time.Second, "")
 	out := buf.String()
 	if !strings.Contains(out, "—") {
 		t.Errorf("StepDone expected dash for zero cost, got: %q", out)
+	}
+}
+
+func TestStepDone_ArtifactPreview(t *testing.T) {
+	var buf bytes.Buffer
+	d := newTestDisplay(&buf)
+	content := "line1\nline2\nline3\n"
+	d.StepDone("plan", "model", "PLAN.md", 0, time.Second, content)
+	out := buf.String()
+	for _, line := range []string{"line1", "line2", "line3"} {
+		if !strings.Contains(out, line) {
+			t.Errorf("StepDone preview missing %q: %q", line, out)
+		}
+	}
+	if !strings.Contains(out, "│") {
+		t.Errorf("StepDone preview missing │ prefix: %q", out)
+	}
+}
+
+func TestStepDone_ArtifactPreviewTruncated(t *testing.T) {
+	var buf bytes.Buffer
+	d := newTestDisplay(&buf)
+	// Build 15-line content; only first 10 should appear, then truncation note.
+	var lines []string
+	for i := 1; i <= 15; i++ {
+		lines = append(lines, fmt.Sprintf("line%d", i))
+	}
+	d.StepDone("plan", "model", "PLAN.md", 0, time.Second, strings.Join(lines, "\n"))
+	out := buf.String()
+	if !strings.Contains(out, "5 more lines") {
+		t.Errorf("StepDone should show truncation note, got: %q", out)
+	}
+	if strings.Contains(out, "line15") {
+		t.Errorf("StepDone should not show line15: %q", out)
 	}
 }
 

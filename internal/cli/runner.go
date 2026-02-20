@@ -123,10 +123,7 @@ func loadPipeline(cfg *config.Config, name string) (*pipeline.Pipeline, error) {
 
 func buildExecutors(cfg *config.Config, prompts map[string]string) map[string]executor.Executor {
 	return map[string]executor.Executor{
-		"api": &executor.APIExecutor{
-			Config:  cfg,
-			Prompts: prompts,
-		},
+		"api": &executor.APIExecutor{Config: cfg, Prompts: prompts},
 	}
 }
 

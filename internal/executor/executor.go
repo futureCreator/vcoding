@@ -17,7 +17,6 @@ type Request struct {
 	Step       types.Step
 	RunDir     string
 	InputFiles map[string]string // filename → content
-	Verbose    bool              // stream executor output to terminal
 }
 
 // Result holds the output of a step execution.
