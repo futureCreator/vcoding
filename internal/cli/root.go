@@ -3,10 +3,9 @@ package cli
 import (
 	"fmt"
 
+	"github.com/epmk/vcoding/pkg/version"
 	"github.com/spf13/cobra"
 )
-
-const version = "0.1.0"
 
 var rootCmd = &cobra.Command{
 	Use:   "vcoding",
@@ -30,6 +29,6 @@ var versionCmd = &cobra.Command{
 	Use:   "version",
 	Short: "Print the version",
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Printf("vcoding %s\n", version)
+		fmt.Printf("vcoding %s\n", version.Version)
 	},
 }

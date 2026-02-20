@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 
 	"github.com/epmk/vcoding/internal/assets"
+	"github.com/epmk/vcoding/pkg/version"
 	"github.com/spf13/cobra"
 )
 
@@ -13,9 +14,9 @@ var initMinimal bool
 
 var initCmd = &cobra.Command{
 	Use:   "init",
-	Short: "Initialize vcoding configuration and project convention files",
-	Long: `Initialize vcoding by creating ~/.vcoding/config.yaml and project-level
-convention files (CLAUDE.md, .cursorrules, AGENTS.md) in the current directory.
+	Short: "Initialize vcoding configuration",
+	Long: `Initialize vcoding by creating ~/.vcoding/config.yaml and generating project
+agent instruction files (CLAUDE.md, AGENTS.md, SKILL.md) in the current directory.
 
 By default the generated config includes inline comments explaining each field.
 Use --minimal to generate a comment-free config version.`,
@@ -33,7 +34,7 @@ func runInit(cmd *cobra.Command, args []string) error {
 	if err := initGlobalConfig(); err != nil {
 		return err
 	}
-	return initConventionFiles()
+	return initProjectFiles()
 }
 
 // initGlobalConfig creates ~/.vcoding/config.yaml if it does not exist.
@@ -74,39 +75,28 @@ func initGlobalConfig() error {
 	return nil
 }
 
-// initConventionFiles writes project-level AI convention files to the current directory.
-// Existing files are overwritten with the latest template content.
-func initConventionFiles() error {
-	files, err := assets.ConventionFiles()
-	if err != nil {
-		return fmt.Errorf("loading convention templates: %w", err)
-	}
+// initProjectFiles generates CLAUDE.md, AGENTS.md, and SKILL.md in the project root.
+func initProjectFiles() error {
+	data := struct{ Version string }{Version: version.Version}
 
-	for _, name := range []string{"CLAUDE.md", ".cursorrules", "AGENTS.md"} {
-		content := files[name]
-		_, statErr := os.Stat(name)
-		exists := statErr == nil
-
-		if exists {
-			f, err := os.OpenFile(name, os.O_APPEND|os.O_WRONLY, 0644)
-			if err != nil {
-				return fmt.Errorf("opening %s: %w", name, err)
-			}
-			_, writeErr := fmt.Fprintf(f, "\n%s", content)
-			closeErr := f.Close()
-			if writeErr != nil {
-				return fmt.Errorf("appending to %s: %w", name, writeErr)
-			}
-			if closeErr != nil {
-				return fmt.Errorf("closing %s: %w", name, closeErr)
-			}
-			fmt.Printf("Appended to %s\n", name)
-		} else {
-			if err := os.WriteFile(name, []byte(content), 0644); err != nil {
-				return fmt.Errorf("writing %s: %w", name, err)
-			}
-			fmt.Printf("Created %s\n", name)
+	for _, filename := range []string{"CLAUDE.md", "AGENTS.md", "SKILL.md"} {
+		if _, err := os.Stat(filename); err == nil {
+			fmt.Printf("%s already exists, skipping\n", filename)
+			continue
 		}
+
+		content, err := assets.RenderTemplate(filename, data)
+		if err != nil {
+			return fmt.Errorf("failed to render template %q: %w (this may indicate a corrupted installation)", filename, err)
+		}
+
+		// Write with 0644 permissions (world-readable, no execute bit)
+		if err := os.WriteFile(filename, []byte(content), 0644); err != nil {
+			return fmt.Errorf("writing %s: %w", filename, err)
+		}
+
+		fmt.Printf("Created %s\n", filename)
 	}
+
 	return nil
 }

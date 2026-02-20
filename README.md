@@ -53,10 +53,10 @@ vcoding init
 ```
 
 This creates:
-- `.vcoding/config.yaml` - Project configuration with default settings
+- `~/.vcoding/config.yaml` - Global configuration with default settings
 - `CLAUDE.md` - Instructions for Claude Code to autonomously run vcoding
 - `AGENTS.md` - Instructions for other AI agents (Cursor, etc.)
-- `.cursorrules` - Cursor-specific rules (if applicable)
+- `SKILL.md` - ClawHub-compatible AgentSkill definition for vcoding
 
 These instruction files enable AI agents to understand and run vcoding pipelines autonomously without manual shell execution.
 
@@ -86,7 +86,7 @@ vcoding pick 123
 vcoding do specs/feature-xyz.md
 ```
 
-The output will be a reviewed `PLAN.md` file in `.vcoding/runs/<run-id>/`.
+The output will be a reviewed `PLAN.md` file in `.vcoding/runs/latest/`.
 
 ## Commands
 
@@ -222,12 +222,13 @@ steps:
     │   ├── TICKET.md       # Input issue/spec
     │   ├── PLAN.md         # Generated plan (final output)
     │   └── REVIEW.md       # Review output
+    ├── latest -> 20240219120000-feature-x/  # symlink to most recent run
     └── ...
 
 # Agent instruction files (created by vcoding init)
 CLAUDE.md                # Claude Code instructions
 AGENTS.md                # Generic AI agent instructions
-.cursorrules             # Cursor-specific rules (optional)
+SKILL.md                 # ClawHub-compatible AgentSkill definition
 ```
 
 ## Environment Variables
@@ -261,10 +262,19 @@ vcoding stats
 After running `vcoding init`, the generated instruction files enable AI agents to autonomously execute vcoding pipelines:
 
 - **Claude Code** (`CLAUDE.md`) - Automatically understands how to run `vcoding pick` or `vcoding do` based on the task
-- **Cursor** (`.cursorrules`) - Cursor-specific instructions for vcoding integration
 - **Other agents** (`AGENTS.md`) - Generic instructions for any AI coding assistant
+- **AgentSkill** (`SKILL.md`) - ClawHub-compatible skill definition for publishing and distributing the vcoding skill
 
 This allows you to simply describe what you want to the AI agent, and it will handle the vcoding workflow automatically without you manually running shell commands.
+
+### ClawHub Publishing
+
+`SKILL.md` follows the ClawHub AgentSkill format and can be published to the ClawHub skill registry. To publish:
+
+1. Ensure `SKILL.md` is committed to your repository
+2. Submit the repository URL to the ClawHub registry
+
+Other agents can then discover and use vcoding by reading the `SKILL.md` definition.
 
 ## Development
 

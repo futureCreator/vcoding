@@ -3,11 +3,13 @@
 package assets
 
 import (
+	"bytes"
 	"embed"
 	"fmt"
 	"io/fs"
 	"os"
 	"path/filepath"
+	"text/template"
 )
 
 //go:embed prompts/*.md
@@ -74,22 +76,23 @@ func LoadTemplate(filename string) (string, error) {
 	return string(data), nil
 }
 
-// conventionFilenames are the project-level AI convention files created by vcoding init.
-var conventionFilenames = []string{"CLAUDE.md", ".cursorrules", "AGENTS.md"}
-
-// ConventionFiles returns the content of each project-level convention file template.
-// The returned map key is the target filename (e.g. "CLAUDE.md", ".cursorrules").
-func ConventionFiles() (map[string]string, error) {
-	result := make(map[string]string, len(conventionFilenames))
-	for _, name := range conventionFilenames {
-		data, err := templatesFS.ReadFile(filepath.Join("templates", name))
-		if err != nil {
-			return nil, fmt.Errorf("convention template %q not found: %w", name, err)
-		}
-		result[name] = string(data)
+// RenderTemplate loads a template by filename and renders it with data using Go's text/template engine.
+func RenderTemplate(filename string, data any) (string, error) {
+	content, err := LoadTemplate(filename)
+	if err != nil {
+		return "", err
 	}
-	return result, nil
+	tmpl, err := template.New(filename).Parse(content)
+	if err != nil {
+		return "", fmt.Errorf("parse template %s: %w", filename, err)
+	}
+	var buf bytes.Buffer
+	if err := tmpl.Execute(&buf, data); err != nil {
+		return "", fmt.Errorf("execute template %s: %w", filename, err)
+	}
+	return buf.String(), nil
 }
+
 
 func readAll(fsys embed.FS, dir, ext string) (map[string]string, error) {
 	result := map[string]string{}
