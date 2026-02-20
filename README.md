@@ -104,6 +104,11 @@ vcoding pick 123
 vcoding do specs/feature-xyz.md
 ```
 
+**From a direct message:**
+```bash
+vcoding ask "Implement user authentication with JWT tokens and session management"
+```
+
 The output will be a reviewed `PLAN.md` file in `.vcoding/runs/latest/`.
 
 ## Commands
@@ -113,6 +118,7 @@ The output will be a reviewed `PLAN.md` file in `.vcoding/runs/latest/`.
 | `vcoding init` | Initialize vCoding configuration and agent instruction files |
 | `vcoding pick <issue>` | Run pipeline on a GitHub issue |
 | `vcoding do <spec-file>` | Run pipeline on a local spec file |
+| `vcoding ask <message>` | Run pipeline from a direct message/prompt |
 | `vcoding stats` | Show cost and run statistics |
 | `vcoding doctor` | Check prerequisites and configuration |
 | `vcoding migrate-config` | Remove deprecated GitHub token fields from config files |
@@ -132,6 +138,18 @@ vcoding pick <issue-number> [flags]
 vcoding do <spec-file> [flags]
   -p, --pipeline string   Pipeline to use (default "default")
   -v, --verbose           Stream executor output to terminal
+```
+
+**ask** - Run pipeline from a direct message
+```bash
+vcoding ask <message> [flags]
+  -p, --pipeline string   Pipeline to use (default "default")
+  -v, --verbose           Stream executor output to terminal
+```
+
+Example:
+```bash
+vcoding ask "Implement user authentication with JWT tokens"
 ```
 
 ## Configuration
@@ -365,7 +383,7 @@ CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build -ldflags="-s -w" -o dist/vcoding-
 - **Pipeline** - YAML-defined workflow with steps
 - **Engine** - Step orchestrator that executes pipelines
 - **Executor** - Interface for different execution types (API, shell)
-- **Source** - Input abstraction (GitHub issues, spec files)
+- **Source** - Input abstraction (GitHub issues, spec files, direct messages)
 - **Context** - File-based context management between steps
 
 ## License

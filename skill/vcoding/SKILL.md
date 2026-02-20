@@ -1,6 +1,6 @@
 ---
 name: "vcoding"
-description: "Multi-model planning pipeline that generates reviewed implementation plans from GitHub issues or spec files. Use when you need to create implementation plans from GitHub issues or specification files, or when the user mentions planning, code planning, or implementation planning."
+description: "Multi-model planning pipeline that generates reviewed implementation plans from GitHub issues, spec files, or direct messages. Use when you need to create implementation plans from GitHub issues, specification files, or user prompts, or when the user mentions planning, code planning, or implementation planning."
 license: "MIT"
 compatibility: "Requires vcoding CLI, git, gh CLI >= 2.0.0 (authenticated), and OPENROUTER_API_KEY environment variable"
 metadata:
@@ -12,7 +12,7 @@ metadata:
 
 # vcoding AgentSkill
 
-Multi-model planning pipeline CLI that orchestrates AI models to generate reviewed implementation plans from GitHub issues or spec files.
+Multi-model planning pipeline CLI that orchestrates AI models to generate reviewed implementation plans from GitHub issues, spec files, or direct messages.
 
 ## Quick Start
 
@@ -44,6 +44,7 @@ vcoding doctor                        # Should print "All checks passed"
 ```bash
 vcoding pick 42                       # Plan from GitHub issue
 vcoding do SPEC.md                    # Plan from spec file
+vcoding ask "Implement user auth..."  # Plan from direct message
 ```
 
 ## Overview
@@ -119,6 +120,22 @@ vcoding do specs/feature.md --verbose
 
 ---
 
+### `vcoding ask <message>`
+
+Run pipeline from a direct message or prompt. Useful when you don't have a GitHub issue or spec file but want to create a plan from a task description.
+
+```bash
+vcoding ask "Implement user authentication with JWT tokens"
+vcoding ask "Create a REST API for managing todos" --verbose
+```
+
+- `-p, --pipeline string` — Pipeline to use (default: "default")
+- `-v, --verbose` — Show full model output
+- Exit: 0 = success, 1 = error
+- Output: `.vcoding/runs/latest/PLAN.md`
+
+---
+
 ### `vcoding stats`
 
 Show cost and run statistics.
@@ -173,7 +190,7 @@ IF exit_code != 0:
    Retry
 
 # 3. Generate plan
-RUN 'vcoding pick <issue>' OR 'vcoding do <spec>'
+RUN 'vcoding pick <issue>' OR 'vcoding do <spec>' OR 'vcoding ask <message>'
 
 # 4. Read plan
 PLAN = READ('.vcoding/runs/latest/PLAN.md')

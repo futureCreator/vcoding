@@ -128,6 +128,16 @@ func (e *Engine) runExecutorStep(ctx context.Context, step types.Step, pipelineC
 		return "", "", 0, err
 	}
 
+	// For Revise step, filter project context to only include files from PLAN.md
+	if strings.EqualFold(step.Name, "Revise") {
+		if planContent, ok := inputFiles["PLAN.md"]; ok {
+			if projectCtx, ok := inputFiles["project:context"]; ok && projectCtx != "" {
+				filteredCtx := FilterProjectContextByPlanFiles(planContent, projectCtx)
+				inputFiles["project:context"] = filteredCtx
+			}
+		}
+	}
+
 	// Apply token budget truncation for API steps.
 	if step.Executor == "api" && e.Config.MaxContextTokens > 0 {
 		sp, _ := resolvePromptForBudget(e, step)

@@ -106,3 +106,63 @@ func BuildTicketContent(title, body string) string {
 	sb.WriteString("\n")
 	return sb.String()
 }
+
+// FilterProjectContextByPlanFiles filters the project context to only include
+// files specified in the plan's "Files to Change" section.
+// If planContent is empty or no files are found, returns the original context.
+func FilterProjectContextByPlanFiles(planContent, projectCtx string) string {
+	if projectCtx == "" || planContent == "" {
+		return projectCtx
+	}
+
+	targetFiles := ExtractFilesFromPlan(planContent)
+	if len(targetFiles) == 0 {
+		return projectCtx
+	}
+
+	// Build a set of target files for quick lookup
+	targetSet := make(map[string]bool)
+	for _, f := range targetFiles {
+		targetSet[f] = true
+		// Also add variants without leading ./
+		targetSet[strings.TrimPrefix(f, "./")] = true
+		// And with leading ./
+		targetSet["./"+f] = true
+	}
+
+	// Parse the project context markdown and filter files
+	var result strings.Builder
+	lines := strings.Split(projectCtx, "\n")
+	inTargetFile := false
+
+	for _, line := range lines {
+		// Check if this is a file header (### filename)
+		if strings.HasPrefix(line, "### ") {
+			// Extract filename from header
+			fileName := strings.TrimPrefix(line, "### ")
+			fileName = strings.TrimSpace(fileName)
+
+			// Check if this file should be included
+			if targetSet[fileName] {
+				inTargetFile = true
+				result.WriteString(line + "\n")
+			} else {
+				inTargetFile = false
+			}
+			continue
+		}
+
+		// If we're in a target file, include all lines until next file
+		if inTargetFile {
+			result.WriteString(line + "\n")
+		}
+	}
+
+	filtered := result.String()
+	if filtered == "" {
+		// If filtering removed everything, return original to be safe
+		return projectCtx
+	}
+
+	return "## Project Context (Filtered to Files in Plan)\n\n" + filtered
+}
