@@ -254,16 +254,50 @@ vcoding stats
 
 ## AI Agent Integration
 
-After running `vcoding init`, the generated `SKILL.md` file enables AI agents to autonomously execute vcoding pipelines. It follows the ClawHub AgentSkill format, allowing agents to discover and run `vcoding pick` or `vcoding do` without manual shell execution.
+vCoding provides a `SKILL.md` file that enables AI coding assistants to autonomously execute vcoding pipelines. Install the skill to your preferred agent:
 
-### ClawHub Publishing
+### Claude Code
 
-`SKILL.md` can be published to the ClawHub skill registry:
+```bash
+mkdir -p ~/.claude/skills/vcoding
+curl -sL https://raw.githubusercontent.com/futureCreator/vcoding/main/skill/vcoding/SKILL.md \
+  -o ~/.claude/skills/vcoding/SKILL.md
+```
 
-1. Ensure `SKILL.md` is committed to your repository
-2. Submit the repository URL to the ClawHub registry
+### OpenCode
 
-Other agents can then discover and use vcoding by reading the `SKILL.md` definition.
+```bash
+mkdir -p ~/.opencode/skills/vcoding
+curl -sL https://raw.githubusercontent.com/futureCreator/vcoding/main/skill/vcoding/SKILL.md \
+  -o ~/.opencode/skills/vcoding/SKILL.md
+```
+
+### Cursor
+
+```bash
+mkdir -p ~/.cursor/skills/vcoding
+curl -sL https://raw.githubusercontent.com/futureCreator/vcoding/main/skill/vcoding/SKILL.md \
+  -o ~/.cursor/skills/vcoding/SKILL.md
+```
+
+### Using Vercel skills CLI (Multi-agent)
+
+Works with claude-code, opencode, cursor, codex, windsurf, and 10+ other agents:
+
+```bash
+npx skills add futureCreator/vcoding -a claude-code
+npx skills add futureCreator/vcoding -a opencode
+npx skills add futureCreator/vcoding -a cursor
+```
+
+### One-line Install (All Agents)
+
+```bash
+# Claude Code
+mkdir -p ~/.claude/skills/vcoding && curl -sL https://raw.githubusercontent.com/futureCreator/vcoding/main/skill/vcoding/SKILL.md -o ~/.claude/skills/vcoding/SKILL.md
+```
+
+Once installed, the agent will automatically understand when to use vcoding based on the skill description and can execute `vcoding pick` or `vcoding do` commands autonomously.
 
 ## Development
 

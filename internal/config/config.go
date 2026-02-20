@@ -96,14 +96,14 @@ func mergeFile(dst *Config, path string) error {
 	if err := yaml.Unmarshal(data, &raw); err == nil {
 		if gh, ok := raw["github"].(map[string]interface{}); ok {
 			if _, hasToken := gh["token"]; hasToken {
-				return fmt.Errorf("configuration field 'github.token' is no longer supported. " +
-					"Please remove it from %s and authenticate via `gh auth login` (or set GH_TOKEN in CI). " +
+				return fmt.Errorf("configuration field 'github.token' is no longer supported. "+
+					"Please remove it from %s and authenticate via `gh auth login` (or set GH_TOKEN in CI). "+
 					"See README for migration details.", path)
 			}
 		}
 		if _, hasToken := raw["github_token"]; hasToken {
-			return fmt.Errorf("configuration field 'github_token' is no longer supported. " +
-				"Please remove it from %s and authenticate via `gh auth login` (or set GH_TOKEN in CI). " +
+			return fmt.Errorf("configuration field 'github_token' is no longer supported. "+
+				"Please remove it from %s and authenticate via `gh auth login` (or set GH_TOKEN in CI). "+
 				"See README for migration details.", path)
 		}
 	}
@@ -125,9 +125,9 @@ func defaults() *Config {
 			APITimeout: "300s",
 		},
 		Roles: RolesConfig{
-			Planner:  "anthropic/claude-opus-4-6",
-			Reviewer: "deepseek/deepseek-r1",
-			Editor:   "z-ai/glm-5",
+			Planner:  "z-ai/glm-5",
+			Reviewer: "deepseek/deepseek-v3.2",
+			Editor:   "moonshotai/kimi-k2.5",
 		},
 		GitHub: GitHubConfig{
 			BaseBranch: "main",

@@ -13,11 +13,11 @@ provider:
 roles:
   # Models for each pipeline role. Values use OpenRouter model format (provider/model).
   # Model for the planner role, responsible for creating implementation plans.
-  planner: anthropic/claude-opus-4-6
+  planner: z-ai/glm-5
   # Model for the reviewer role, responsible for reviewing plans and code.
-  reviewer: deepseek/deepseek-r1
+  reviewer: deepseek/deepseek-v3.2
   # Model for the editor role, responsible for revising and editing plans.
-  editor: z-ai/glm-5
+  editor: moonshotai/kimi-k2.5
 
 github:
   # Default repository in owner/repo format. Leave empty to disable auto-detection from git remote.

@@ -5,9 +5,9 @@ provider:
   api_timeout: 300s
 
 roles:
-  planner: anthropic/claude-opus-4-6
-  reviewer: deepseek/deepseek-r1
-  editor: z-ai/glm-5
+  planner: z-ai/glm-5
+  reviewer: deepseek/deepseek-v3.2
+  editor: moonshotai/kimi-k2.5
 
 github:
   default_repo: ""
