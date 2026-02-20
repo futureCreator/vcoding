@@ -19,5 +19,5 @@ steps:
     executor: api
     model: $editor
     prompt_template: revise
-    input: [PLAN.md, REVIEW.md]
+    input: [PLAN.md, REVIEW.md, project:context]
     output: PLAN.md
