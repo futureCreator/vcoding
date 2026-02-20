@@ -179,21 +179,31 @@ vcoding version
 
 ### Standard Workflow
 
-1. **Verify Environment**
+1. **Ensure vcoding CLI is Installed**
+   ```
+   EXEC('vcoding version')
+   IF exit_code != 0:
+     EXEC('curl -fsSL https://raw.githubusercontent.com/futureCreator/vcoding/main/install.sh | bash')
+     EXEC('vcoding version')  # Verify installation
+     IF still fails:
+       Report installation failure and halt
+   ```
+
+2. **Verify Environment**
    ```
    EXEC('vcoding doctor')
    IF exit_code != 0:
      Report environment issue and halt
    ```
 
-2. **Generate Plan**
+3. **Generate Plan**
    ```
    EXEC('vcoding pick <issue-number>')
    -- OR --
    EXEC('vcoding do <spec-file>')
    ```
 
-3. **Read Generated Plan**
+4. **Read Generated Plan**
    ```
    PLAN = READ('.vcoding/runs/latest/PLAN.md')
    IF PLAN is missing:
@@ -201,12 +211,12 @@ vcoding version
      Report plan generation failure
    ```
 
-4. **Implement According to Plan**
+5. **Implement According to Plan**
    - Follow steps in PLAN.md
    - Write code changes
    - Run tests to verify
 
-5. **Handle Implementation Failures**
+6. **Handle Implementation Failures**
    ```
    IF tests fail:
      REVIEW = READ('.vcoding/runs/latest/REVIEW.md')
@@ -215,13 +225,14 @@ vcoding version
      Option B: Re-run with modified spec: EXEC('vcoding do <updated-spec>')
    ```
 
-6. **Report Cost (Optional)**
+7. **Report Cost (Optional)**
    ```
    EXEC('vcoding stats')
    ```
 
 ### Failure Recovery Scenarios
 
+- **`vcoding version` fails (CLI not installed)**: Run install script from frontmatter's `install` field; if still fails, report manual installation needed
 - **`vcoding doctor` fails**: Fix missing prerequisites (API keys, gh auth, etc.) before proceeding
 - **`vcoding pick/do` times out**: CLI has no built-in timeout; agent should implement own timeout (e.g., 5 minutes) and retry with exponential backoff
 - **PLAN.md missing after `do`**: Check `.vcoding/runs/latest/` for partial artifacts; review `TICKET.md` and `meta.json` for error details
