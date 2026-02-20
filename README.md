@@ -20,6 +20,7 @@ The final output is a reviewed `PLAN.md` file ready for implementation.
 - **Run isolation**: Each execution gets its own timestamped directory with immutable snapshots
 - **Cost tracking**: Monitors API usage and costs across runs
 - **No loops**: Fixed linear sequence for predictable cost and time
+- **AI agent ready**: Generated instruction files enable autonomous execution by Claude Code, Cursor, and other AI assistants
 
 ## Installation
 
@@ -51,7 +52,13 @@ mv vcoding /usr/local/bin/
 vcoding init
 ```
 
-This creates a `.vcoding/config.yaml` file with default settings.
+This creates:
+- `.vcoding/config.yaml` - Project configuration with default settings
+- `CLAUDE.md` - Instructions for Claude Code to autonomously run vcoding
+- `AGENTS.md` - Instructions for other AI agents (Cursor, etc.)
+- `.cursorrules` - Cursor-specific rules (if applicable)
+
+These instruction files enable AI agents to understand and run vcoding pipelines autonomously without manual shell execution.
 
 ### 2. Set up your OpenRouter API key
 
@@ -85,7 +92,7 @@ The output will be a reviewed `PLAN.md` file in `.vcoding/runs/<run-id>/`.
 
 | Command | Description |
 |---------|-------------|
-| `vcoding init` | Initialize vCoding configuration |
+| `vcoding init` | Initialize vCoding configuration and agent instruction files |
 | `vcoding pick <issue>` | Run pipeline on a GitHub issue |
 | `vcoding do <spec-file>` | Run pipeline on a local spec file |
 | `vcoding stats` | Show cost and run statistics |
@@ -118,8 +125,6 @@ Configuration is loaded in the following priority order:
 ### Example configuration
 
 ```yaml
-default_pipeline: default
-
 provider:
   endpoint: https://openrouter.ai/api/v1
   api_key_env: OPENROUTER_API_KEY
@@ -218,6 +223,11 @@ steps:
     │   ├── PLAN.md         # Generated plan (final output)
     │   └── REVIEW.md       # Review output
     └── ...
+
+# Agent instruction files (created by vcoding init)
+CLAUDE.md                # Claude Code instructions
+AGENTS.md                # Generic AI agent instructions
+.cursorrules             # Cursor-specific rules (optional)
 ```
 
 ## Environment Variables
@@ -245,6 +255,16 @@ vCoding tracks API costs for each run. View statistics with:
 ```bash
 vcoding stats
 ```
+
+## AI Agent Integration
+
+After running `vcoding init`, the generated instruction files enable AI agents to autonomously execute vcoding pipelines:
+
+- **Claude Code** (`CLAUDE.md`) - Automatically understands how to run `vcoding pick` or `vcoding do` based on the task
+- **Cursor** (`.cursorrules`) - Cursor-specific instructions for vcoding integration
+- **Other agents** (`AGENTS.md`) - Generic instructions for any AI coding assistant
+
+This allows you to simply describe what you want to the AI agent, and it will handle the vcoding workflow automatically without you manually running shell commands.
 
 ## Development
 

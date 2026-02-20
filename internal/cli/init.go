@@ -13,11 +13,12 @@ var initMinimal bool
 
 var initCmd = &cobra.Command{
 	Use:   "init",
-	Short: "Initialize vcoding configuration",
-	Long: `Initialize vcoding configuration by creating ~/.vcoding/config.yaml.
+	Short: "Initialize vcoding configuration and project convention files",
+	Long: `Initialize vcoding by creating ~/.vcoding/config.yaml and project-level
+convention files (CLAUDE.md, .cursorrules, AGENTS.md) in the current directory.
 
-By default the generated file includes inline comments explaining each field.
-Use --minimal to generate a comment-free version.`,
+By default the generated config includes inline comments explaining each field.
+Use --minimal to generate a comment-free config version.`,
 	RunE: runInit,
 }
 
@@ -26,6 +27,14 @@ func init() {
 }
 
 func runInit(cmd *cobra.Command, args []string) error {
+	if err := initGlobalConfig(); err != nil {
+		return err
+	}
+	return initConventionFiles()
+}
+
+// initGlobalConfig creates ~/.vcoding/config.yaml if it does not exist.
+func initGlobalConfig() error {
 	home, err := os.UserHomeDir()
 	if err != nil {
 		return fmt.Errorf("getting home dir: %w", err)
@@ -59,5 +68,31 @@ func runInit(cmd *cobra.Command, args []string) error {
 	fmt.Printf("Created %s\n", configPath)
 	fmt.Println("Edit the file to set your API keys and preferences.")
 	fmt.Println("Set OPENROUTER_API_KEY environment variable for API access.")
+	return nil
+}
+
+// initConventionFiles writes project-level AI convention files to the current directory.
+// Existing files are overwritten with the latest template content.
+func initConventionFiles() error {
+	files, err := assets.ConventionFiles()
+	if err != nil {
+		return fmt.Errorf("loading convention templates: %w", err)
+	}
+
+	for _, name := range []string{"CLAUDE.md", ".cursorrules", "AGENTS.md"} {
+		content := files[name]
+		_, statErr := os.Stat(name)
+		exists := statErr == nil
+
+		if err := os.WriteFile(name, []byte(content), 0644); err != nil {
+			return fmt.Errorf("writing %s: %w", name, err)
+		}
+
+		if exists {
+			fmt.Printf("Updated %s\n", name)
+		} else {
+			fmt.Printf("Created %s\n", name)
+		}
+	}
 	return nil
 }

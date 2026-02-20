@@ -10,7 +10,6 @@ import (
 
 // Config is the top-level configuration structure.
 type Config struct {
-	DefaultPipeline  string           `yaml:"default_pipeline"`
 	Provider         ProviderConfig   `yaml:"provider"`
 	Roles            RolesConfig      `yaml:"roles"`
 	GitHub           GitHubConfig     `yaml:"github"`
@@ -51,9 +50,6 @@ type ProjectCtxConfig struct {
 
 // Validate checks that required fields are present.
 func (c *Config) Validate() error {
-	if c.DefaultPipeline == "" {
-		return fmt.Errorf("default_pipeline is required")
-	}
 	if c.Provider.Endpoint == "" {
 		return fmt.Errorf("provider.endpoint is required")
 	}
@@ -123,7 +119,6 @@ func Defaults() *Config {
 
 func defaults() *Config {
 	return &Config{
-		DefaultPipeline: "default",
 		Provider: ProviderConfig{
 			Endpoint:   "https://openrouter.ai/api/v1",
 			APIKeyEnv:  "OPENROUTER_API_KEY",

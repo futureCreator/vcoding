@@ -16,7 +16,7 @@ var promptsFS embed.FS
 //go:embed pipelines/*.yaml
 var pipelinesFS embed.FS
 
-//go:embed templates/*.yaml
+//go:embed all:templates
 var templatesFS embed.FS
 
 // LoadPrompt returns the content of a prompt template by name.
@@ -72,6 +72,23 @@ func LoadTemplate(filename string) (string, error) {
 		return "", fmt.Errorf("template %q not found", filename)
 	}
 	return string(data), nil
+}
+
+// conventionFilenames are the project-level AI convention files created by vcoding init.
+var conventionFilenames = []string{"CLAUDE.md", ".cursorrules", "AGENTS.md"}
+
+// ConventionFiles returns the content of each project-level convention file template.
+// The returned map key is the target filename (e.g. "CLAUDE.md", ".cursorrules").
+func ConventionFiles() (map[string]string, error) {
+	result := make(map[string]string, len(conventionFilenames))
+	for _, name := range conventionFilenames {
+		data, err := templatesFS.ReadFile(filepath.Join("templates", name))
+		if err != nil {
+			return nil, fmt.Errorf("convention template %q not found: %w", name, err)
+		}
+		result[name] = string(data)
+	}
+	return result, nil
 }
 
 func readAll(fsys embed.FS, dir, ext string) (map[string]string, error) {

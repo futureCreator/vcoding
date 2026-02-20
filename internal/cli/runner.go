@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"path/filepath"
 
 	"github.com/epmk/vcoding/internal/assets"
 	"github.com/epmk/vcoding/internal/config"
@@ -104,7 +105,19 @@ func runPipeline(ctx context.Context, src source.Source, pipelineName string, ve
 		Verbose:   verbose,
 	}
 
-	return engine.Execute(ctx, pipelineCtx)
+	if err := engine.Execute(ctx, pipelineCtx); err != nil {
+		return err
+	}
+
+	// Copy the final PLAN.md to .vcoding/PLAN.md for easy access.
+	if plan, err := r.ReadFile("PLAN.md"); err == nil {
+		dest := filepath.Join(".vcoding", "PLAN.md")
+		if writeErr := os.WriteFile(dest, []byte(plan), 0644); writeErr == nil {
+			fmt.Printf("\nPlan saved to %s\n", dest)
+		}
+	}
+
+	return nil
 }
 
 func loadPipeline(cfg *config.Config, name string) (*pipeline.Pipeline, error) {

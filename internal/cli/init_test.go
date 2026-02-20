@@ -12,13 +12,28 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
+// chdirTemp changes the working directory to a new temp dir for the duration of
+// the test, restoring the original directory when the test completes.
+func chdirTemp(t *testing.T) string {
+	t.Helper()
+	orig, err := os.Getwd()
+	if err != nil {
+		t.Fatal(err)
+	}
+	tmp := t.TempDir()
+	if err := os.Chdir(tmp); err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { os.Chdir(orig) })
+	return tmp
+}
+
 func TestDefaultTemplateContainsComments(t *testing.T) {
 	content, err := assets.LoadTemplate("config.yaml")
 	if err != nil {
 		t.Fatalf("LoadTemplate: %v", err)
 	}
 	for _, want := range []string{
-		"# Pipeline to use",
 		"# OpenRouter-compatible",
 		"# Models for each pipeline role",
 	} {
@@ -79,6 +94,7 @@ func TestTemplatesDeeplyEqualDefaults(t *testing.T) {
 func TestInitCreatesFile(t *testing.T) {
 	tmpDir := t.TempDir()
 	t.Setenv("HOME", tmpDir)
+	chdirTemp(t)
 	initMinimal = false
 
 	if err := runInit(initCmd, nil); err != nil {
@@ -98,6 +114,7 @@ func TestInitCreatesFile(t *testing.T) {
 func TestInitSkipsWhenFileExists(t *testing.T) {
 	tmpDir := t.TempDir()
 	t.Setenv("HOME", tmpDir)
+	chdirTemp(t)
 
 	configDir := filepath.Join(tmpDir, ".vcoding")
 	if err := os.MkdirAll(configDir, 0755); err != nil {
@@ -125,6 +142,7 @@ func TestInitSkipsWhenFileExists(t *testing.T) {
 func TestInitMinimalFlag(t *testing.T) {
 	tmpDir := t.TempDir()
 	t.Setenv("HOME", tmpDir)
+	chdirTemp(t)
 	initMinimal = true
 	defer func() { initMinimal = false }()
 
@@ -146,5 +164,49 @@ func TestInitMinimalFlag(t *testing.T) {
 		if strings.HasPrefix(strings.TrimSpace(line), "#") {
 			t.Errorf("minimal config has unexpected comment at line %d: %q", i+1, line)
 		}
+	}
+}
+
+func TestInitCreatesConventionFiles(t *testing.T) {
+	tmpDir := t.TempDir()
+	t.Setenv("HOME", tmpDir)
+	chdirTemp(t)
+
+	if err := runInit(initCmd, nil); err != nil {
+		t.Fatalf("runInit: %v", err)
+	}
+
+	for _, name := range []string{"CLAUDE.md", ".cursorrules", "AGENTS.md"} {
+		data, err := os.ReadFile(name)
+		if err != nil {
+			t.Errorf("convention file %q not created: %v", name, err)
+			continue
+		}
+		if !strings.Contains(string(data), ".vcoding/PLAN.md") {
+			t.Errorf("convention file %q does not mention .vcoding/PLAN.md", name)
+		}
+	}
+}
+
+func TestInitUpdatesExistingConventionFiles(t *testing.T) {
+	tmpDir := t.TempDir()
+	t.Setenv("HOME", tmpDir)
+	chdirTemp(t)
+
+	// Pre-create convention files with stale content.
+	if err := os.WriteFile("CLAUDE.md", []byte("old content"), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := runInit(initCmd, nil); err != nil {
+		t.Fatalf("runInit: %v", err)
+	}
+
+	data, err := os.ReadFile("CLAUDE.md")
+	if err != nil {
+		t.Fatalf("CLAUDE.md not found after init: %v", err)
+	}
+	if string(data) == "old content" {
+		t.Error("runInit did not update existing CLAUDE.md")
 	}
 }

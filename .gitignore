@@ -3,3 +3,4 @@ vcoding
 *.test
 
 CLAUDE.md
+!internal/assets/templates/CLAUDE.md

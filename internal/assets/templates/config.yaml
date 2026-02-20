@@ -2,10 +2,6 @@
 # vcoding configuration file.
 # Config resolution order: project .vcoding/config.yaml > user ~/.vcoding/config.yaml > built-in defaults.
 
-# Pipeline to use by default. Available values: "default", "quick", or a custom pipeline name.
-# Custom pipelines are loaded from .vcoding/pipelines/<name>.yaml.
-default_pipeline: default
-
 provider:
   # OpenRouter-compatible API endpoint URL.
   endpoint: https://openrouter.ai/api/v1
