@@ -35,11 +35,22 @@ The final output is a reviewed `PLAN.md` file ready for implementation.
 
 ### Prerequisites
 
-- Go 1.22+
 - `gh` CLI (GitHub CLI) - for issue fetching (optional)
 - OpenRouter API key - for accessing AI models
 
+### Install via script
+
+The easiest way to install vCoding is using the install script:
+
+```bash
+curl -sL https://raw.githubusercontent.com/futureCreator/vcoding/main/install.sh | bash
+```
+
+This will automatically detect your OS and architecture, download the latest release, and install it to `/usr/local/bin` or `~/.local/bin`.
+
 ### Build from source
+
+Requires Go 1.22+:
 
 ```bash
 git clone https://github.com/futureCreator/vcoding.git

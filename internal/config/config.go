@@ -122,7 +122,7 @@ func defaults() *Config {
 		Provider: ProviderConfig{
 			Endpoint:   "https://openrouter.ai/api/v1",
 			APIKeyEnv:  "OPENROUTER_API_KEY",
-			APITimeout: "300s",
+			APITimeout: "600s",
 		},
 		Roles: RolesConfig{
 			Planner:  "z-ai/glm-5",
