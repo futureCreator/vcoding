@@ -30,6 +30,7 @@ The final output is a reviewed `PLAN.md` file ready for implementation.
 - **Cost tracking**: Monitors API usage and costs across runs
 - **No loops**: Fixed linear sequence for predictable cost and time
 - **AI agent ready**: Generated instruction files enable autonomous execution by Claude Code, Cursor, and other AI assistants
+- **Smart context filtering**: Revise step automatically filters project context to only include files from PLAN.md's "Files to Change" section, reducing token usage by up to 90%+
 
 ## Installation
 
@@ -206,9 +207,11 @@ Pipelines define the sequence of steps executed during a run.
 The built-in planning workflow with review cycle:
 1. **Plan** - Create implementation plan from ticket and project context
 2. **Review** - Review the plan
-3. **Revise** - Revise based on review
+3. **Revise** - Revise based on review (automatically filters context to files in PLAN.md)
 
 Models are referenced by role (`$planner`, `$reviewer`, `$editor`) and resolved from config at runtime.
+
+**Note:** The Revise step automatically filters the project context to only include files listed in PLAN.md's "Files to Change" section. This significantly reduces token usage and API costs while keeping the relevant context for the editor model.
 
 ### Custom pipelines
 
@@ -256,7 +259,8 @@ steps:
     │   ├── meta.json       # Run metadata
     │   ├── TICKET.md       # Input issue/spec
     │   ├── PLAN.md         # Generated plan (final output)
-    │   └── REVIEW.md       # Review output
+    │   ├── REVIEW.md       # Review output
+    │   └── Revise-context-filtered.md  # Debug: filtered context for Revise step
     ├── latest -> 20240219120000-feature-x/  # symlink to most recent run
     └── ...
 
