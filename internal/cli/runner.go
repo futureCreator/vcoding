@@ -18,6 +18,10 @@ import (
 
 // runPipeline is the shared entry point for pick and do commands.
 func runPipeline(ctx context.Context, src source.Source, pipelineName string, verbose bool) error {
+	if err := checkPrerequisites(); err != nil {
+		return err
+	}
+
 	// Load config
 	cfg, err := config.Load()
 	if err != nil {

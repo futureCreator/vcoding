@@ -27,6 +27,9 @@ func init() {
 }
 
 func runInit(cmd *cobra.Command, args []string) error {
+	if err := checkGitAndGH(); err != nil {
+		return err
+	}
 	if err := initGlobalConfig(); err != nil {
 		return err
 	}
