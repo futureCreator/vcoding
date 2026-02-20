@@ -19,15 +19,15 @@ type Run struct {
 
 // Meta holds metadata about a run, persisted to meta.json.
 type Meta struct {
-	StartedAt  time.Time    `json:"started_at"`
-	InputMode  string       `json:"input_mode"`  // "pick" | "do"
-	InputRef   string       `json:"input_ref"`   // issue number or spec path
-	Status     string       `json:"status"`      // "running" | "completed" | "failed"
-	Steps      []StepResult `json:"steps"`
-	TotalCost  float64      `json:"total_cost"`
-	Error      string       `json:"error,omitempty"`
-	GitBranch  string       `json:"git_branch"`
-	GitCommit  string       `json:"git_commit"`
+	StartedAt time.Time    `json:"started_at"`
+	InputMode string       `json:"input_mode"` // "pick" | "do"
+	InputRef  string       `json:"input_ref"`  // issue number or spec path
+	Status    string       `json:"status"`     // "running" | "completed" | "failed"
+	Steps     []StepResult `json:"steps"`
+	TotalCost float64      `json:"total_cost"`
+	Error     string       `json:"error,omitempty"`
+	GitBranch string       `json:"git_branch"`
+	GitCommit string       `json:"git_commit"`
 }
 
 // StepResult records the outcome of a single step.

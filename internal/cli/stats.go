@@ -29,8 +29,8 @@ func runStats(cmd *cobra.Command, args []string) error {
 	}
 
 	type runStat struct {
-		id     string
-		meta   run.Meta
+		id   string
+		meta run.Meta
 	}
 
 	var stats []runStat
