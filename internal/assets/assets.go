@@ -93,7 +93,6 @@ func RenderTemplate(filename string, data any) (string, error) {
 	return buf.String(), nil
 }
 
-
 func readAll(fsys embed.FS, dir, ext string) (map[string]string, error) {
 	result := map[string]string{}
 	entries, err := fs.ReadDir(fsys, dir)

@@ -8,9 +8,9 @@ import (
 
 // GitInfo holds current git state.
 type GitInfo struct {
-	Branch string
-	Commit string
-	Diff   string
+	Branch  string
+	Commit  string
+	Diff    string
 	IsDirty bool
 }
 
