@@ -139,8 +139,22 @@ func (e *Engine) runExecutorStep(ctx context.Context, step types.Step, pipelineC
 				filteredTokens := EstimateTokens(filteredCtx)
 				targetFiles := ExtractFilesFromPlan(planContent)
 
+				// Extract first few lines of project context to see header format
+				var firstHeaders []string
+				lines := strings.Split(projectCtx, "\n")
+				for _, line := range lines {
+					if strings.HasPrefix(line, "### ") {
+						firstHeaders = append(firstHeaders, strings.TrimPrefix(line, "### "))
+						if len(firstHeaders) >= 3 {
+							break
+						}
+					}
+				}
+
 				vlog.Info("Revise context filtering",
 					"files_in_plan", len(targetFiles),
+					"target_files", fmt.Sprintf("%v", targetFiles),
+					"context_headers_sample", fmt.Sprintf("%v", firstHeaders),
 					"original_tokens", originalTokens,
 					"filtered_tokens", filteredTokens,
 					"reduction_percent", fmt.Sprintf("%.1f%%", float64(originalTokens-filteredTokens)/float64(originalTokens)*100))
