@@ -1,4 +1,5 @@
 /vcoding
+dist/
 .vcoding
 *.test
 

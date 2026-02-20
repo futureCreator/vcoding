@@ -322,6 +322,21 @@ go test ./...
 go build ./cmd/vcoding
 ```
 
+### Static Build (Linux)
+
+For portable static binaries compatible across different Linux distributions:
+
+```bash
+# AMD64
+CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -o dist/vcoding-linux-amd64 ./cmd/vcoding
+
+# ARM64
+CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build -ldflags="-s -w" -o dist/vcoding-linux-arm64 ./cmd/vcoding
+```
+
+- `CGO_ENABLED=0`: Disables CGO for pure Go binaries with no external dependencies
+- `-ldflags="-s -w"`: Strips symbol table and DWARF debug info to reduce binary size
+
 ## Architecture
 
 ### Design Decisions
