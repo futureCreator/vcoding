@@ -1,4 +1,5 @@
 // Package assets provides embedded prompt templates and default pipeline definitions.
+// NOTE: Template files in templates/ must stay in sync with config.defaults() in internal/config/config.go.
 package assets
 
 import (
@@ -14,6 +15,9 @@ var promptsFS embed.FS
 
 //go:embed pipelines/*.yaml
 var pipelinesFS embed.FS
+
+//go:embed templates/*.yaml
+var templatesFS embed.FS
 
 // LoadPrompt returns the content of a prompt template by name.
 // Override lookup order: project .vcoding/prompts/ > user ~/.vcoding/prompts/ > embedded.
@@ -56,6 +60,16 @@ func loadWithOverride(dir, filename string, embedded embed.FS) (string, error) {
 	data, err := embedded.ReadFile(embeddedPath)
 	if err != nil {
 		return "", fmt.Errorf("%s %q not found", dir, filename)
+	}
+	return string(data), nil
+}
+
+// LoadTemplate returns the content of a config template by explicit filename.
+// Valid filenames: "config.yaml" (with comments) or "config.minimal.yaml" (without comments).
+func LoadTemplate(filename string) (string, error) {
+	data, err := templatesFS.ReadFile(filepath.Join("templates", filename))
+	if err != nil {
+		return "", fmt.Errorf("template %q not found", filename)
 	}
 	return string(data), nil
 }

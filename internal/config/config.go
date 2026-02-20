@@ -114,6 +114,13 @@ func mergeFile(dst *Config, path string) error {
 	return yaml.Unmarshal(data, dst)
 }
 
+// Defaults returns the built-in default configuration.
+// NOTE: These values must stay in sync with internal/assets/templates/config.yaml
+// and internal/assets/templates/config.minimal.yaml.
+func Defaults() *Config {
+	return defaults()
+}
+
 func defaults() *Config {
 	return &Config{
 		DefaultPipeline: "default",

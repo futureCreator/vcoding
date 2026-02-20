@@ -5,13 +5,24 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/epmk/vcoding/internal/assets"
 	"github.com/spf13/cobra"
 )
+
+var initMinimal bool
 
 var initCmd = &cobra.Command{
 	Use:   "init",
 	Short: "Initialize vcoding configuration",
-	RunE:  runInit,
+	Long: `Initialize vcoding configuration by creating ~/.vcoding/config.yaml.
+
+By default the generated file includes inline comments explaining each field.
+Use --minimal to generate a comment-free version.`,
+	RunE: runInit,
+}
+
+func init() {
+	initCmd.Flags().BoolVar(&initMinimal, "minimal", false, "Generate config without inline comments")
 }
 
 func runInit(cmd *cobra.Command, args []string) error {
@@ -31,36 +42,17 @@ func runInit(cmd *cobra.Command, args []string) error {
 		return nil
 	}
 
-	defaultConfig := `# vcoding configuration
-default_pipeline: default
+	templateFilename := "config.yaml"
+	if initMinimal {
+		templateFilename = "config.minimal.yaml"
+	}
 
-provider:
-  endpoint: https://openrouter.ai/api/v1
-  api_key_env: OPENROUTER_API_KEY
+	content, err := assets.LoadTemplate(templateFilename)
+	if err != nil {
+		return fmt.Errorf("failed to load template %q: %w (this may indicate a corrupted installation)", templateFilename, err)
+	}
 
-roles:
-  planner: anthropic/claude-opus-4-6
-  reviewer: deepseek/deepseek-r1
-  editor: z-ai/glm-5
-
-github:
-  base_branch: main
-
-language:
-  artifacts: en
-  normalize_ticket: true
-
-project_context:
-  max_files: 20
-  max_file_size: 50KB
-  include_patterns: ["*.go", "*.rs", "*.ts", "*.py", "*.md"]
-  exclude_patterns: ["vendor/", "node_modules/", ".git/"]
-
-max_context_tokens: 80000
-log_level: info
-`
-
-	if err := os.WriteFile(configPath, []byte(defaultConfig), 0644); err != nil {
+	if err := os.WriteFile(configPath, []byte(content), 0644); err != nil {
 		return fmt.Errorf("writing config: %w", err)
 	}
 
