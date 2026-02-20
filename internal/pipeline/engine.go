@@ -133,6 +133,27 @@ func (e *Engine) runExecutorStep(ctx context.Context, step types.Step, pipelineC
 		if planContent, ok := inputFiles["PLAN.md"]; ok {
 			if projectCtx, ok := inputFiles["project:context"]; ok && projectCtx != "" {
 				filteredCtx := FilterProjectContextByPlanFiles(planContent, projectCtx)
+
+				// Debug: Log token counts and save filtered context
+				originalTokens := EstimateTokens(projectCtx)
+				filteredTokens := EstimateTokens(filteredCtx)
+				targetFiles := ExtractFilesFromPlan(planContent)
+
+				vlog.Info("Revise context filtering",
+					"files_in_plan", len(targetFiles),
+					"original_tokens", originalTokens,
+					"filtered_tokens", filteredTokens,
+					"reduction_percent", fmt.Sprintf("%.1f%%", float64(originalTokens-filteredTokens)/float64(originalTokens)*100))
+
+				// Save filtered context for debugging
+				if writeErr := e.Run.WriteFile("Revise-context-filtered.md", filteredCtx); writeErr != nil {
+					vlog.Warn("failed to save filtered context", "err", writeErr)
+				}
+				// Also save original for comparison
+				if writeErr := e.Run.WriteFile("Revise-context-original.md", projectCtx); writeErr != nil {
+					vlog.Warn("failed to save original context", "err", writeErr)
+				}
+
 				inputFiles["project:context"] = filteredCtx
 			}
 		}

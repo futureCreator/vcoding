@@ -166,3 +166,13 @@ func FilterProjectContextByPlanFiles(planContent, projectCtx string) string {
 
 	return "## Project Context (Filtered to Files in Plan)\n\n" + filtered
 }
+
+// EstimateTokens estimates the number of tokens in a string.
+// Uses a rough heuristic of ~4 characters per token (approximation for GPT models).
+func EstimateTokens(text string) int {
+	if text == "" {
+		return 0
+	}
+	// Rough estimate: 1 token ≈ 4 characters for English text
+	return len(text) / 4
+}
