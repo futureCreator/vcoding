@@ -96,11 +96,7 @@ func (d *Display) stopTicker() {
 	}
 }
 
-// maxPreviewLines is the default number of artifact lines shown after step completion.
-const maxPreviewLines = 10
-
 // StepDone prints a completed step line, overwriting the running line in non-verbose mode.
-// artifactContent, when non-empty, is shown as a preview (first maxPreviewLines lines).
 func (d *Display) StepDone(name, model, detail string, cost float64, duration time.Duration, artifactContent string) {
 	d.stopTicker()
 	model = truncateModel(model)
@@ -114,27 +110,6 @@ func (d *Display) StepDone(name, model, detail string, cost float64, duration ti
 	}
 	fmt.Fprintf(d.w, "%s✅ %-12s %-30s %-28s %-10s %.1fs\n",
 		prefix, name, model, detail, costStr, duration.Seconds())
-
-	// Artifact preview
-	if artifactContent != "" {
-		lines := strings.Split(artifactContent, "\n")
-		// Drop the trailing empty element that Split adds for a newline-terminated string.
-		if len(lines) > 0 && lines[len(lines)-1] == "" {
-			lines = lines[:len(lines)-1]
-		}
-		previewLines := lines
-		truncated := false
-		if len(lines) > maxPreviewLines {
-			previewLines = lines[:maxPreviewLines]
-			truncated = true
-		}
-		for _, l := range previewLines {
-			fmt.Fprintf(d.w, "  │ %s\n", l)
-		}
-		if truncated {
-			fmt.Fprintf(d.w, "  │ ... (%d more lines)\n", len(lines)-maxPreviewLines)
-		}
-	}
 }
 
 // StepFailed prints a failed step line, overwriting the running line in non-verbose mode.
