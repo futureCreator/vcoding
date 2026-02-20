@@ -54,19 +54,28 @@ func ExtractFilesFromPlan(planContent string) ([]string, []string) {
 			content = strings.TrimPrefix(content, "*")
 			content = strings.TrimSpace(content)
 
-			// Remove backticks if present
+			// Extract content from backticks if present: `filepath` description
+			// Pattern: `internal/foo.go` description here
+			if strings.HasPrefix(content, "`") {
+				endTick := strings.Index(content[1:], "`")
+				if endTick >= 0 {
+					file := content[1 : endTick+1]
+					if isValidFilePath(file) {
+						files = append(files, file)
+						continue
+					}
+				}
+			}
+
+			// Fallback: Remove backticks if present (for non-standard formats)
 			content = strings.Trim(content, "`")
 
-			// Extract file path (stop at description markers)
+			// Extract file path (stop at description markers: em dash, hyphen, or colon)
 			file := content
-			if idx := strings.Index(content, " - "); idx > 0 {
-				file = strings.TrimSpace(content[:idx])
-			}
-			if idx := strings.Index(content, ":"); idx > 0 {
-				// Check if it looks like a description after colon
-				afterColon := strings.TrimSpace(content[idx+1:])
-				if len(afterColon) > 5 && !strings.Contains(afterColon, "/") && !strings.Contains(afterColon, ".") {
+			for _, sep := range []string{" — ", " - ", ":"} {
+				if idx := strings.Index(content, sep); idx > 0 {
 					file = strings.TrimSpace(content[:idx])
+					break
 				}
 			}
 
